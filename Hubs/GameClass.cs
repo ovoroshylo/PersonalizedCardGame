@@ -185,7 +185,7 @@ namespace PersonalizedCardGame.Hubs
                         if (disconnectedplayer.CurrentGameCode != "" && disconnectedplayer.CurrentGameCode != null)
                         {
 
-                          
+
 
                             disconnectedplayer.IsConnected = false;
                             disconnectedplayer.IsActive = false;

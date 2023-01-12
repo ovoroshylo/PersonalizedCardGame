@@ -56,7 +56,7 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public IActionResult _CreateGame([FromBody]CreateGame model)
+        public IActionResult _CreateGame([FromBody] CreateGame model)
         {
             var resp = new CommonResponse();
             try
@@ -70,7 +70,7 @@ namespace PersonalizedCardGame.Controllers
                     var gameresp = _context.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
 
                     // temporary if not keeping the records
-                    List<GameHashTemp> deps = _context.GameHashTemp.Where(x => x.Created < DateTime.Now.AddDays(-10) &&  x.Modified < DateTime.Now.AddDays(-10)).ToList();
+                    List<GameHashTemp> deps = _context.GameHashTemp.Where(x => x.Created < DateTime.Now.AddDays(-10) && x.Modified < DateTime.Now.AddDays(-10)).ToList();
                     List<ExceptionLog> deps1 = _context.ExceptionLog.Where(x => x.Modified < DateTime.Now.AddDays(-10)).ToList();
                     _context.GameHashTemp.RemoveRange(deps);
                     _context.ExceptionLog.RemoveRange(deps1);
@@ -90,7 +90,7 @@ namespace PersonalizedCardGame.Controllers
                         _context.GameHashTemp.Add(new GameHashTemp() { Created = DateTime.Now, GameCode = model.GameCode, GameHash = model.GameHash, IsActive = true, GamePlayerHash = model.GamePlayerHash });
 
                         var currentplayer = _context.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
-                         currentplayer.CurrentGameCode = model.GameCode;
+                        currentplayer.CurrentGameCode = model.GameCode;
                         currentplayer.IsConnected = true;
                         currentplayer.IsDealer = true;
                         currentplayer.IsActive = true;
@@ -123,7 +123,7 @@ namespace PersonalizedCardGame.Controllers
         }
 
         [HttpPost]
-        public IActionResult _JoinGame([FromBody]CreateGame model)
+        public IActionResult _JoinGame([FromBody] CreateGame model)
         {
 
             try
@@ -169,7 +169,7 @@ namespace PersonalizedCardGame.Controllers
         }
 
         [HttpPost]
-        public IActionResult _PlayerAction([FromBody]PlayerGenericActionRequest model)
+        public IActionResult _PlayerAction([FromBody] PlayerGenericActionRequest model)
         {
 
             var resp = new PlayerActionResponse();
@@ -238,7 +238,7 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public IActionResult _GetGamePlayers([FromBody]PlayerGenericActionRequest model)
+        public IActionResult _GetGamePlayers([FromBody] PlayerGenericActionRequest model)
         {
 
             var resp = new PlayerActionResponse();
@@ -271,7 +271,7 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public IActionResult _GetGameHash([FromBody]string GameCode)
+        public IActionResult _GetGameHash([FromBody] string GameCode)
         {
             try
             {
@@ -313,7 +313,7 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public IActionResult _UpdateGameHash([FromBody]UpdateHashRequest model)
+        public IActionResult _UpdateGameHash([FromBody] UpdateHashRequest model)
         {
 
             var resp = new CommonResponse();
@@ -383,7 +383,7 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public IActionResult _SendCancelHandNotification([FromBody]SendNotificationRequest model)
+        public IActionResult _SendCancelHandNotification([FromBody] SendNotificationRequest model)
         {
             using (var _context = new DBCardGameContext())
             {
@@ -416,14 +416,14 @@ namespace PersonalizedCardGame.Controllers
 
 
         [HttpPost]
-        public string ExceptionLogger([FromBody]string request)
+        public string ExceptionLogger([FromBody] string request)
         {
             return "";
 
         }
 
         [HttpPost]
-        public IActionResult GameLogginExtension([FromBody]GameLoggingRequest model)
+        public IActionResult GameLogginExtension([FromBody] GameLoggingRequest model)
         {
             var resp = new CommonResponse();
 
@@ -455,7 +455,7 @@ namespace PersonalizedCardGame.Controllers
 
         // first time if player dont have unique id 
         [HttpPost]
-        public JsonResult _GetUserIdentity([FromBody]string request)
+        public JsonResult _GetUserIdentity([FromBody] string request)
         {
             try
             {
@@ -482,7 +482,7 @@ namespace PersonalizedCardGame.Controllers
 
         // after creating uniqueid and updating connection id 
         [HttpPost]
-        public IActionResult _UpdateUserIdentity([FromBody]string request)
+        public IActionResult _UpdateUserIdentity([FromBody] string request)
         {
             try
             {

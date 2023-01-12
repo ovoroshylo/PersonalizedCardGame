@@ -9,7 +9,7 @@ namespace SignalRChat.Hubs
     public class MyHub : Hub
     {
         public static List<string> lst = new List<string>();
-        
+
         public async Task SendMessage(string user, string message)
         {
             var val1 = Context.ConnectionId;
@@ -24,7 +24,7 @@ namespace SignalRChat.Hubs
 
 
 
-        public async Task SendMessage2(string user, string message,string test)
+        public async Task SendMessage2(string user, string message, string test)
         {
             var val1 = Context.ConnectionId;
             var val2 = Context.User;
@@ -67,7 +67,7 @@ namespace SignalRChat.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
 
-            
+
             UserHandler.ConnectedIds.Remove(Context.ConnectionId);
             return base.OnConnectedAsync();
         }
@@ -87,14 +87,14 @@ namespace SignalRChat.Hubs
 
 
     public class UserConnection
-    { 
+    {
         public string UserName { get; set; }
-    
+
         public string UserUniqueId { get; set; }
 
         public string ConnectionId { get; set; }
-    
-    
+
+
     }
 
 
