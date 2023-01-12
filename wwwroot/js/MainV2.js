@@ -1,4 +1,6 @@
-﻿
+﻿/*
+     ------------------ BEGIN variable definition and initialization ------------------
+*/
 var CurrentConnectionId = "111";
 var CurrentUserId = "1";
 var CurrentUserSerialNumber = "1";
@@ -31,7 +33,6 @@ var UserIdentity = {
     ConnectionId: 'signalr connectionid',
     GameCode: '1312313'
 };
-
 
 // region game props - specific thread
 var GameHash = {
@@ -211,414 +212,17 @@ var GameHash = {
 
 }
 
-function createCookie(cookieName, cookieValue, daysToExpire) {
-    var date = new Date();
-    date.setTime(date.getTime() + (daysToExpire * 24 * 60 * 60 * 1000));
-    document.cookie = cookieName + "=" + cookieValue + "; expires=" + date.toGMTString();
-}
-
-function accessCookie(cookieName) {
-    var name = cookieName + "=";
-    var allCookieArray = document.cookie.split(';');
-    for (var i = 0; i < allCookieArray.length; i++) {
-        var temp = allCookieArray[i].trim();
-        if (temp.indexOf(name) == 0)
-            return temp.substring(name.length, temp.length);
-    }
-    return "";
-}
-
-
-async function start() {
-    try {
-
-        if (connection.state == "Connected")
-            return;
-
-        await connection.start();
-        if (connection.state == "Connected" || connection.state == "Reconnected") {
-            // join game 
-
-            //Disable send button until connection is established
-            //document.getElementById("sendButton").disabled = true;
-
-
-
-            var TempResponse = "";
-
-            connection.on("ReceiveMessage", function (message) {
-                var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                var encodedMsg = user + " says " + msg;
-                // var li = document.createElement("li");
-                // li.textContent = encodedMsg;
-                // document.getElementById("messagesList").appendChild(li);
-                TempResponse = message;
-                alert("Try again in few seconds..");
-
-
-            });
-
-
-
-            connection.on("ReceiveNotification", function (gamecode, playerid, notificationmessage) {
-
-
-                if (GameHash.GameId == gamecode) {
-
-                    //ViewNotification(notificationmessage);
-                }
-            });
-
-
-
-            connection.on("ReceiveCancelHandNotification", function (gamecode) {
-
-
-                $('#ModalInfoCancelHand').modal("show");
-
-            });
-
-
-
-
-
-
-
-
-            connection.on("ReceiveEndGameSummary", function (gamecode) {
-
-
-                try {
-
-                    $('.EndGameForCurrent').show();
-                    if (GameHash.GameId == gamecode) {
-
-
-
-                        //disable if sno is not dealer 
-                        if (GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].IsDealer != "Y") {
-
-                            $('.EndGameForCurrent').hide();
-                            ShowSummaryV2();
-
-                            //ShowSummary();
-                        }
-                    }
-                }
-                catch (err) {
-
-                    GameLogging(err, 2);
-                }
-            });
-
-            connection.on("ReceiveEndHandSummary", function (gamecode) {
-
-                try {
-
-
-                    $('.EndGameForCurrent').show();
-                    $('.SettleRound').show();
-
-                    if (GameHash.GameId == gamecode) {
-
-                        //disable if sno is not dealer 
-                        if (GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].IsDealer != "Y") {
-
-                            $('.SettleRound').hide();
-                            $('.EndGameForCurrent').hide();
-                            ShowHandSettleHand();
-                        }
-                    }
-
-                }
-                catch (err) {
-
-
-                    GameLogging(err, 2);
-
-                }
-
-            });
-
-            connection.on("OtherPlayerDisconnected", function (PlayerConnectionId, UserId) {
-
-                OtherPlayerDisconnected(PlayerConnectionId, UserId);
-
-            });
-
-
-            connection.on("ReceiveHashV1", function (IsHashUpdated) {
-
-                try {
-
-                    _GetUpdatedGameHash(GameHash.GameId);
-                    UpdateView();
-                    console.log(" ReceiveHashV1  " + GameHash.GameId);
-                }
-                catch (err) {
-                    GameLogging(err, 2);
-
-                }
-            });
-
-
-
-
-
-
-
-
-
-
-
-
-
-        }
-        console.log("SignalR Connected.");
-    } catch (err) {
-        console.log(err);
-        setTimeout(start, 5000);
-    }
-};
-
-
-
-function ClearCookieFunction() {
-    createCookie("UserIdentity", "", 2000);
-    location.reload();
-
-
-}
-
-
-
-
-// new validateuser function
-function ValidateUserConnection() {
-
-    var CustomCookie = accessCookie("UserIdentity");
-    //debugger;
-    if (CustomCookie == "") {
-        // ajax call to get unique identity
-
-        model = {
-            "request": "UNIQUEIDENTITY"
-        };
-        var dataResponse;
-        $.ajax({
-            url: 'api/GameV2/_GetUserIdentity',
-            type: 'POST',
-            contentType: 'application/json;',
-            data: JSON.stringify("uniqueidentity"),
-            async: false,
-            success: function (data) {
-                //debugger;
-                dataResponse = data;
-                console.log("url: 'api/GameV2/_CreateGame',---------success");
-            },
-            complete: function (res) {
-
-                //debugger;
-                console.log(dataResponse);
-                //StartGame(dataResponse);
-                createCookie("UserIdentity", dataResponse, 2000);
-                createCookie("IsIdentityRenewed", "2", 2000);
-                localStorage.removeItem("LastGameCode"); //, GameCode);
-                localStorage.removeItem("UserId") //, model.UserId);
-                CustomCookie = accessCookie("UserIdentity");
-
-                var url = "/GameClass?UserIdentity=" + CustomCookie + "";
-                connection = new signalR.HubConnectionBuilder().withUrl(url).withAutomaticReconnect([0, 0, 10000]).build();
-                connection.onclose(function () {
-                    start();
-                });
-
-                connection.onreconnected(connectionId => {
-                    console.log("connected with " + connectionId + " --> " + connection.state === signalR.HubConnectionState.Connected);
-
-                });
-
-                start();
-
-
-
-            }
-        });
-    }
-    else {
-
-        var url = "/GameClass?UserIdentity=" + CustomCookie + "";
-        connection = new signalR.HubConnectionBuilder().withUrl(url).withAutomaticReconnect([0, 0, 10000]).build();
-        connection.onclose(function () {
-            start();
-        });
-
-        connection.onreconnected(connectionId => {
-            console.log("connected with " + connectionId + " --> " + connection.state === signalR.HubConnectionState.Connected);
-
-        });
-
-        start();
-
-    }
-
-    // set cookie and start connection
-
-}
-
-
-function _GetUpdatedGameHash(gameid) {
-
-
-    $('.spinner').show();
-
-
-    model = {
-        "request": "UNIQUEIDENTITY"
-    };
-    var result;
-    $.ajax({
-        url: 'api/GameV2/_GetGameHash',
-        type: 'POST',
-        contentType: 'application/json;',
-        data: gameid == undefined ? GameHash.GameId : gameid,
-        async: false,
-        success: function (data) {
-            result = data;
-            console.log("url: 'api/GameV2/_CreateGame',---------success");
-        },
-        complete: function (res) {
-
-            try {
-                GameHashOrginal = JSON.parse(result);
-                GameHash = JSON.parse(result);
-                //UpdateView();
-                $('.spinner').hide();
-            }
-            catch (err) {
-                $('.spinner').hide();
-                console.log(err);
-                ExceptionLogging(err);
-            }
-
-
-        }
-
-    })
-        .done(function (result) {
-        });
-
-
-}
-
-
-function OtherPlayerDisconnected(PlayerConnectionId, UserId) {
-    console.log('OtherPlayerDisconnected' + '   ' + PlayerConnectionId + '     ' + UserId);
-
-    console.log(" PlayerConnectionId " + PlayerConnectionId);
-    // var li = document.createElement("li");
-    // li.textContent = encodedMsg;
-    // document.getElementById("messagesList").appendChild(li);
-    ////debugger;
-    //
-    //GameHash = JSON.parse(GameHash1);
-    PlayerConnectionId = "pk2" + UserId.split("pk2")[1];
-
-    if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId)).length == 1) {
-        var snumber = GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].Sno;
-
-        GameHash.ContinuityPlayers = GameHash.ContinuityPlayers.filter(x => x.PlayerId.includes(PlayerConnectionId) == false);
-        //OnPlayerAction();
-        var grtrSno = -1; var lsrSno = -1;
-        //GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsFolded = "Y";
-        if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber).length > 0)
-            grtrSno = GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber)[0].Sno;
-        if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > 0).length > 0)
-            lsrSno = GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > 0)[0].Sno;
-
-        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent == "Y") {
-
-
-            $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsCurrent = "N"; });
-
-
-            if (GameHash.ActivePlayers.filter(x => x.Sno > snumber && x.IsFolded == "N").length == 0) {
-                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsDealer = "Y";
-                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsCurrent = "Y";
-                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].Sno);
-            }
-            else {
-                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > Sno)[0].IsDealer = "Y";
-                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].IsCurrent = "Y";
-                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].Sno);
-
-            }
-
-        }
-
-        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer == "Y") {
-
-            $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsDealer = "N"; });
-
-            if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded == "N").length == 0) {
-                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsDealer = "Y";
-                // for removing deal duplication
-                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
-
-                    obj2.IsDealer = "N";
-
-                });
-                GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber)[0].IsDealer = "Y";
-            }
-            else {
-                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > Sno)[0].IsDealer = "Y";
-                // for removing deal duplication
-                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
-
-                    obj2.IsDealer = "N";
-
-                });
-                // for removing deal duplication
-                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
-
-                    obj2.IsDealer = "N";
-
-                });
-                GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded == "N")[0].IsDealer = "Y";
-
-            }
-
-
-        }
-
-        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer = "N";
-        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent = "N";
-        //GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsFolded = "N";
-        GameHash.ContinuityPlayers.push(GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0]);
-
-        if (GameHash.ActivePlayers.filter(x => (x.Sno == Sno && (x.IsCurrent == "Y" || x.IsDealer == "Y"))).length > 0) {
-
-            UpdateGameHash(GameHash.GameId);
-
-        }
-
-    }
-
-    UpdateView();
-    //UpdateGameHash(GameHash.GameId);
-
-
-
-
-}
-
-
+/*
+     ------------------ END variable definition and initialization ------------------
+*/
+
+/*
+     ------------------ BEGIN event definition ------------------
+*/
 
 $(document).on("click", ".BtnResume", function () {
 
     try {
-
-
         JoinGame(localStorage.getItem("UserId").split("pk2")[0], localStorage.getItem("UserId").split("pk2")[1], localStorage.getItem("LastGameCode"));
     } catch (err) {
 
@@ -626,7 +230,6 @@ $(document).on("click", ".BtnResume", function () {
 
     }
 });
-
 
 $(document).on("click", ".MyModalEndHand_Yes", function () {
 
@@ -640,12 +243,10 @@ $(document).on("click", ".MyModalEndHand_Yes", function () {
 
 });
 
-
 $(document).on("click", ".MyModalEndHand_No", function () {
 
     $("#MyModalEndHand").modal("hide");
 });
-
 
 $(document).on("click", ".PlayerCard", function () {
 
@@ -694,49 +295,36 @@ $(document).on("click", ".PlayerCard", function () {
 
 $(document).on("click", ".GenerateCode", function () {
 
-
     $('#GameCode').val(GenerateCode());
-
 
 });
 
 $(document).on("click", ".BtnStart", function () {
 
-
     if ($('#UserName').val() == "" || $('#GameCode').val() == "") {
         alert("Enter username & Generate Game Code to share");
     } else {
+
         GameCode = $('#GameCode').val();
+
+        //hide homescreen and go into GameBoard
         $("#HomeScreen").hide();
         $("#GameBoard").show();
 
+        //show please wait spinner for 2 seconds.
         $('.spinner').show();
+
+        //Create game
         CreateGame();
 
         setTimeout(function () {
             $('.spinner').hide();
-        }, 2000)
+        }, 2000);
     }
 
 });
 
-function copyInvitation() {
-    /* Get the text field */
-    var copyText = document.getElementById("GameCode");
-
-    /* Select the text field */
-    copyText.select();
-    copyText.setSelectionRange(0, 99999); /*For mobile devices*/
-
-    /* Copy the text inside the text field */
-    document.execCommand("copy");
-
-    /* Alert the copied text */
-    alert("Copied code: " + copyText.value);
-}
-
 $(document).on("click", ".BtnLeave", function () {
-
 
     $('#myModalLeave').find('.modal-body').html("Are you sure you want to leave the game?");
     $('#myModalLeave').modal('show');
@@ -785,63 +373,6 @@ $(document).on("click", ".BackToMenu", function () {
 
 
 });
-
-
-
-function ShowSummaryV2() {
-
-    if (GameHash.PotSize == 0) {
-
-
-
-
-        $('#SettlementModalEndGame').find('.SettleUp-tbody').html("");
-        var htmSettleUpBody = '<table style="width:100%;"><tr><td>Name</td><td>Amount</td><td>Transaction</td></tr>';
-        var resp = CalculateEndHand(GameHash);
-        $.each(resp.GameHashTemp.ActivePlayers.sort(function (a, b) {
-            return a.PlayerNetStatusFinal - b.PlayerNetStatusFinal
-        }), function (i, obj) {
-
-            var tmpAmount = obj.PlayerNetStatusFinal;
-
-            var tmpTransactionMessage = "";
-            $.each(resp.ArrTransaction.filter(x => x["from"] == obj.PlayerId), function (cnt, obj2) {
-
-                tmpTransactionMessage += obj.PlayerId.split("pk2")[0] + " owes " + obj2["amount"] + " to " + obj2["to"].split("pk2")[0] + ",<br/>";
-            });
-
-
-            htmSettleUpBody += '<tr><td>' + obj.PlayerId.split("pk2")[0] + '</td><td>' + tmpAmount + '</td><td>' + tmpTransactionMessage + '</td></tr>';
-
-        });
-
-
-        htmSettleUpBody += "</table>";
-
-
-
-        $('#SettlementModalEndGame').find('.SettleUp-tbody').append(htmSettleUpBody);
-
-
-
-
-        $('#SettlementModalEndGame').modal({
-            backdrop: 'static',
-            keyboard: false
-        });
-
-        $('#SettlementModalEndGame').modal('show');
-
-        if (GameHash.ActivePlayers.filter(x => x.IsDealer == "Y")[0].Sno == Sno)
-            SendEndGameSummary(GameHash.GameId);
-
-    } else {
-        alert("Game cannot be ended when pot is not settled. Please distribute the Pot First");
-
-    }
-
-}
-
 
 $(document).on("click", ".BtnSitOut", function () {
 
@@ -975,8 +506,6 @@ $(document).on("click", ".BtnSitOut", function () {
 
 });
 
-
-
 $(document).on("click", ".BtnRejoin", function () {
 
 
@@ -987,10 +516,6 @@ $(document).on("click", ".BtnRejoin", function () {
     IsSitOut = false;
 
 });
-
-
-
-
 
 $(document).on("click", ".EndGameForCurrent", function () {
 
@@ -1104,7 +629,6 @@ $(document).on("click", ".BtnSettle", function () {
 
 });
 
-
 $(document).on("click", ".SettleRound", function () {
 
     //GameHash.Transaction = [];
@@ -1126,112 +650,12 @@ $(document).on("click", ".SettleRound", function () {
 
 });
 
-function ModalInfoCancelHandPrompt_Yes() {
-
-    //GameHash.Transaction = [];
-    $('#ModalInfoCancelHandPrompt').modal('hide');
-    $.each(GameHash.ActivePlayers, function (i, obj) {
-
-        if (obj.PlayerNetStatusFinal == undefined)
-            obj.PlayerNetStatusFinal = 0;
-
-        if (obj.PlayerAmount < 0) {
-            GameHash.PotSize = GameHash.PotSize + obj.PlayerAmount;
-        }
-
-
-        obj.PlayerAmount = 0;
-        obj.Balance = 0;
-        obj.CurrentRoundStatus = 0;
-
-        obj.PlayerCards = [];
-    });
-
-    GameHash.CommunityCards = [];
-    GameHash.Deck = GetNewDeck();
-
-
-    GameHash.Steps.push({
-        RoundId: GameHash.Round,
-        Step: {
-            PlayerId: GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].PlayerId,
-            PlayerSno: Sno,
-            Action: "Cancelled Hand",
-            Amount: 0
-        }
-    });
-
-
-
-    UpdateGameHash(GameHash.GameId);
-    SendCancelHandNotification();
-
-
-
-
-
-
-}
-
-
-
-function SendCancelHandNotification() {
-
-    $('.spinner').show();
-    model = {
-        "NotificationType": "CancelHand",
-        "GameCode": GameHash.GameId,
-        "NotificationMessage": "hand has been cancelled by dealer"
-
-    };
-
-    // //debugger;
-
-    var responseData;
-    $.ajax({
-        url: 'api/GameV2/_SendCancelHandNotification',
-        type: 'POST',
-        async: true,
-        contentType: 'application/json;',
-        data: JSON.stringify(model),
-        success: function (data) {
-            responseData = data;
-            console.log("url: 'api/GameV2/Hand Cancelled',---------success");
-
-            UpdateView();
-            $('#ModalInfoCancelHand').modal('show');
-
-            GameLogging(GameHash, 1);
-            $('.spinner').hide();
-
-        }
-
-    })
-        .done(function (result) {
-
-            console.log("Updated hash:" + responseData);
-
-        });
-
-
-}
-
-
-
 $(document).on("click", ".BtnCancelHand", function () {
 
 
     $('#ModalInfoCancelHandPrompt').modal('show');
 
 });
-
-
-
-
-
-
-
-
 
 $(document).on("click", ".Bet", function () {
 
@@ -1320,8 +744,6 @@ $(document).on("click", ".Bet", function () {
 
 });
 
-
-
 $(document).on("click", ".AddToPot", function () {
 
     //logic
@@ -1394,9 +816,6 @@ $(document).on("click", ".AddToPot", function () {
 
 });
 
-
-
-
 $(document).on("click", ".Call", function () {
 
 
@@ -1466,8 +885,6 @@ $(document).on("click", ".Call", function () {
     }
 });
 
-
-
 $(document).on("click", ".Discard", function () {
 
     //logic
@@ -1523,8 +940,6 @@ $(document).on("click", ".Discard", function () {
     // view
 
 });
-
-
 
 $(document).on("click", ".Take", function () {
 
@@ -1595,7 +1010,6 @@ $(document).on("click", ".Take", function () {
     }
 });
 
-
 $(document).on("click", ".Show", function () {
 
     //$.each(GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].PlayerCards, function (i, obj) {
@@ -1631,8 +1045,6 @@ $(document).on("click", ".Show", function () {
     // OnPlayerAction();
 
 }); // check = pass
-
-
 
 $(document).on("click", ".ShowAll", function () {
 
@@ -1685,11 +1097,7 @@ $(document).on("click", ".ShowAll", function () {
 
 }); // check = pass
 
-
-
-
 $(document).on("click", ".Ante", function () {
-
 
     if (GameHash.ActivePlayers.filter(x => x.IsFolded == "N" && x.IsDealer == "N").length > 0) {
 
@@ -1754,9 +1162,6 @@ $(document).on("click", ".Ante", function () {
     // OnPlayerAction();
 
 }); // check = pass
-
-
-
 
 $(document).on("click", ".Fold", function () {
 
@@ -1933,7 +1338,6 @@ $(document).on("click", ".Pass", function () {
     }
 });
 
-
 $(document).on("click", ".PassDeal", function () {
 
     //$('.PassDeal').attr('data-original-title', "Click to see the option");
@@ -1967,7 +1371,6 @@ $(document).on("click", ".PassDeal", function () {
 
 });
 
-
 $(document).on("click", ".PassCard", function () {
 
     $('.tooltip-inner').html('');
@@ -1999,12 +1402,6 @@ $(document).on("click", ".PassCard", function () {
 
 });
 
-
-
-
-
-
-
 $(document).on("click", ".BtnShuffle", function () {
 
     var val1 = getRandomInt(1, GameHash.Deck.length);
@@ -2023,8 +1420,6 @@ $(document).on("click", ".BtnShuffle", function () {
     //OnPlayerAction();
 
 });
-
-
 
 $(document).on("click", ".CommunityCard", function () {
 
@@ -2057,16 +1452,174 @@ $(document).on("click", ".CommunityCard", function () {
 
 });
 
-
-//for localvalues
 $(document).on("keyup", "#BetTakeValue", function () { BetTakeLocalValue = $(this).val(); });
 $(document).on("keyup", "#txtAnte", function () { txtAnte = $(this).val(); });
 $(document).on("keyup", "#DealValue", function () { DealLocalValue = $(this).val(); });
 
+/*
+     ------------------ END event definition ------------------
+*/
+
+/*
+     ------------------ BEGIN function definition ------------------
+*/
+
+function copyInvitation() {
+    /* Get the text field */
+    var copyText = document.getElementById("GameCode");
+
+    /* Select the text field */
+    copyText.select();
+    copyText.setSelectionRange(0, 99999); /*For mobile devices*/
+
+    /* Copy the text inside the text field */
+    document.execCommand("copy");
+
+    /* Alert the copied text */
+    alert("Copied code: " + copyText.value);
+}
+
+function ShowSummaryV2() {
+
+    if (GameHash.PotSize == 0) {
 
 
 
 
+        $('#SettlementModalEndGame').find('.SettleUp-tbody').html("");
+        var htmSettleUpBody = '<table style="width:100%;"><tr><td>Name</td><td>Amount</td><td>Transaction</td></tr>';
+        var resp = CalculateEndHand(GameHash);
+        $.each(resp.GameHashTemp.ActivePlayers.sort(function (a, b) {
+            return a.PlayerNetStatusFinal - b.PlayerNetStatusFinal
+        }), function (i, obj) {
+
+            var tmpAmount = obj.PlayerNetStatusFinal;
+
+            var tmpTransactionMessage = "";
+            $.each(resp.ArrTransaction.filter(x => x["from"] == obj.PlayerId), function (cnt, obj2) {
+
+                tmpTransactionMessage += obj.PlayerId.split("pk2")[0] + " owes " + obj2["amount"] + " to " + obj2["to"].split("pk2")[0] + ",<br/>";
+            });
+
+
+            htmSettleUpBody += '<tr><td>' + obj.PlayerId.split("pk2")[0] + '</td><td>' + tmpAmount + '</td><td>' + tmpTransactionMessage + '</td></tr>';
+
+        });
+
+
+        htmSettleUpBody += "</table>";
+
+
+
+        $('#SettlementModalEndGame').find('.SettleUp-tbody').append(htmSettleUpBody);
+
+
+
+
+        $('#SettlementModalEndGame').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        $('#SettlementModalEndGame').modal('show');
+
+        if (GameHash.ActivePlayers.filter(x => x.IsDealer == "Y")[0].Sno == Sno)
+            SendEndGameSummary(GameHash.GameId);
+
+    } else {
+        alert("Game cannot be ended when pot is not settled. Please distribute the Pot First");
+
+    }
+
+}
+
+function ModalInfoCancelHandPrompt_Yes() {
+
+    //GameHash.Transaction = [];
+    $('#ModalInfoCancelHandPrompt').modal('hide');
+    $.each(GameHash.ActivePlayers, function (i, obj) {
+
+        if (obj.PlayerNetStatusFinal == undefined)
+            obj.PlayerNetStatusFinal = 0;
+
+        if (obj.PlayerAmount < 0) {
+            GameHash.PotSize = GameHash.PotSize + obj.PlayerAmount;
+        }
+
+
+        obj.PlayerAmount = 0;
+        obj.Balance = 0;
+        obj.CurrentRoundStatus = 0;
+
+        obj.PlayerCards = [];
+    });
+
+    GameHash.CommunityCards = [];
+    GameHash.Deck = GetNewDeck();
+
+
+    GameHash.Steps.push({
+        RoundId: GameHash.Round,
+        Step: {
+            PlayerId: GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].PlayerId,
+            PlayerSno: Sno,
+            Action: "Cancelled Hand",
+            Amount: 0
+        }
+    });
+
+
+
+    UpdateGameHash(GameHash.GameId);
+    SendCancelHandNotification();
+
+
+
+
+
+
+}
+
+function SendCancelHandNotification() {
+
+    $('.spinner').show();
+    model = {
+        "NotificationType": "CancelHand",
+        "GameCode": GameHash.GameId,
+        "NotificationMessage": "hand has been cancelled by dealer"
+
+    };
+
+    // //debugger;
+
+    var responseData;
+    $.ajax({
+        url: 'api/GameV2/_SendCancelHandNotification',
+        type: 'POST',
+        async: true,
+        contentType: 'application/json;',
+        data: JSON.stringify(model),
+        success: function (data) {
+            responseData = data;
+            console.log("url: 'api/GameV2/Hand Cancelled',---------success");
+
+            UpdateView();
+            $('#ModalInfoCancelHand').modal('show');
+
+            GameLogging(GameHash, 1);
+            $('.spinner').hide();
+
+        }
+
+    })
+        .done(function (result) {
+
+            console.log("Updated hash:" + responseData);
+
+        });
+
+
+}
 
 function UpdateGameHash(code) {
 
@@ -2111,12 +1664,10 @@ function UpdateGameHash(code) {
 
 }
 
-
 function BodyClick() {
 
     $("[data-toggle='tooltip']").tooltip('hide');
 }
-
 
 function PassDealPlayer(newdealerSno) {
 
@@ -2165,8 +1716,6 @@ function PassDealPlayer(newdealerSno) {
 
 
 }
-
-
 
 function TakeCommunityCard(val) {
     if (val == "1") {
@@ -2227,19 +1776,17 @@ function TakeCommunityCard(val) {
 
 }
 
-
-//$('.Player[data-sno="' + obj.Sno + '"]').
-
-
-
-function GenerateCode(length) {
-    var result = '';
+/*
+    Generating Invitation Code(length = 7)
+*/
+function GenerateCode() {
+    var invitation_code = '';
     var characters = '1386540';
     var charactersLength = characters.length;
     for (var i = 0; i < charactersLength; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        invitation_code += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
-    return result;
+    return invitation_code;
 }
 
 function Deal(obj) {
@@ -2353,7 +1900,6 @@ function Deal(obj) {
 
 }
 
-
 function ShowLoader() {
 
 
@@ -2370,7 +1916,6 @@ function HideLoader() {
     $('.customPanel').show(500);
 }
 
-
 // controller
 
 // from controller
@@ -2378,6 +1923,10 @@ function CreateGame() {
 
     try {
 
+        /*
+            initialize Gamehash
+            Set GameId as random gernerated GameCode
+        */
         GameHash.Steps = [];
         GameHash.CommunityCards = [];
         GameHash.ActivePlayers = [];
@@ -2399,7 +1948,6 @@ function CreateGame() {
             IsFolded: "N",
             CurrentRoundStatus: 0,
             PlayerUniqueId: accessCookie("UserIdentity")
-
         });
         Sno = 1;
 
@@ -2441,8 +1989,6 @@ function CreateGame() {
     }
 }
 
-
-
 function StartGame(result) {
 
 
@@ -2460,9 +2006,6 @@ function StartGame(result) {
     }
 
 }
-
-
-
 
 function ExceptionLogging(err1) {
 
@@ -2517,8 +2060,6 @@ function ExceptionLogging(err1) {
 
 }
 
-
-
 function GameLogging(err, entrytype) {
 
     if (entrytype == 2)
@@ -2560,9 +2101,6 @@ function GameLogging(err, entrytype) {
 
 }
 
-
-
-
 function PlayerActionSitOut() {
 
     var model = { PlayerUniqueId: localStorage.getItem("UserId"), GameCode: localStorage.getItem("LastGameCode"), ActionCode: "SitOut", GameHash: JSON.stringify(GameHash), ConnectionId: connection.ConnectionId };
@@ -2585,7 +2123,6 @@ function PlayerActionSitOut() {
         });
 
 }
-
 
 function PlayerActionRejoin() {
 
@@ -2661,9 +2198,6 @@ function GetCurrentGamePlayerList() {
     return resp;
 }
 
-
-
-
 async function JoinGame(UserId, ConnectionId, GameCode) {
 
     localStorage.setItem("LastGameCode", GameCode);
@@ -2701,7 +2235,6 @@ async function JoinGame(UserId, ConnectionId, GameCode) {
         .done(function (result) {
 
             $('.spinner').hide();
-
 
             if (result == undefined || result == null) {
 
@@ -2859,8 +2392,6 @@ async function JoinGame(UserId, ConnectionId, GameCode) {
     $('#ResumeGameModal').modal('hide')
 
 }
-
-
 
 function UpdateView() {
 
@@ -3291,9 +2822,6 @@ function UpdateView() {
     }
 }
 
-
-
-
 function ShowLastAction() {
 
     try {
@@ -3314,16 +2842,12 @@ function ShowLastAction() {
     }
 }
 
-
-
-
 function AddCard(PlayerSno, CardValue, CardType) // 1, AH, public/private
 {
 
     var $SelectedPlayer = $('.Player[data-sno="' + PlayerSno + '"]');
 
 }
-
 
 function OnPlayerAction() {
 
@@ -3531,9 +3055,6 @@ function OnPlayerAction() {
 
 }
 
-
-
-
 function ViewNotification(msg) {
 
 
@@ -3545,7 +3066,6 @@ function ViewNotification(msg) {
     });
 
 }
-
 
 function PassCard(obj) {
 
@@ -3622,8 +3142,6 @@ function PassCard(obj) {
 
 }
 
-
-
 function PassCardToPlayerByDrop(_ToPassPlayerSno, _CardValue) {
 
     $("[data-toggle='tooltip']").tooltip('hide');
@@ -3636,7 +3154,6 @@ function PassCardToPlayerByDrop(_ToPassPlayerSno, _CardValue) {
 
 }
 
-
 function PassCardToCommunityDrop(_Community, _CardValue) {
 
     $("[data-toggle='tooltip']").tooltip('hide');
@@ -3647,11 +3164,6 @@ function PassCardToCommunityDrop(_Community, _CardValue) {
     GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].PlayerCards = GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].PlayerCards.filter(y => y.Value != _CardValue);
 
 }
-
-
-
-
-
 
 function PassCardToCommunity(num) {
 
@@ -3729,9 +3241,6 @@ function ShowCommunityCard(CardValue) {
     }
     UpdateGameHash(GameHash.GameId);
 }
-
-
-
 // view generators - for new functionality 
 
 function GetBetStatus(snoCurrent) {
@@ -3750,7 +3259,6 @@ function GetBetStatus(snoCurrent) {
 
     return msg1;
 }
-
 
 function SwapCard() {
 
@@ -3779,9 +3287,6 @@ function SwapCard() {
 
 
 }
-
-
-
 
 function DistributePot() {
 
@@ -3922,8 +3427,6 @@ function DistributePot() {
     }
 }
 
-
-
 function DistributePotFinal() {
 
     try {
@@ -4037,8 +3540,6 @@ function DistributePotFinal() {
 
 }
 
-
-
 function SettleHand_Click() {
 
     try {
@@ -4063,8 +3564,6 @@ function SettleHand_Click() {
 
 
 }
-
-
 
 function SettleRound(SettleType) {
 
@@ -4288,8 +3787,6 @@ function SettleRound(SettleType) {
 
 }
 
-
-
 /**
  * Returns parameter string with its first letter capitalized
  * 
@@ -4431,84 +3928,10 @@ function ShowLogging() {
     });
 }
 
-//function ShowLogging() {
-
-//    try {
-
-//        // logging
-//        $('.logging').html('');
-//        $('.CustomSideBar').html('');
-
-
-//        var tempRound = "";
-//        var prevMessage = "";
-//        $.each(GameHash.Steps, function (i, obj) {
-
-
-
-//            if (obj.RoundId != "0") {
-
-//                prevMessage = obj.Step.Action;
-
-//                var spanClass = "";
-//                if (obj.RoundId % 2 == 0)
-//                    spanClass = "even";
-//                else
-//                    spanClass = "odd";
-
-
-
-//                var html = "";
-//                var htmlRound = "";
-//                if (tempRound != obj.RoundId) {
-//                    tempRound = obj.RoundId;
-//                    htmlRound += "<span class='" + spanClass + "'>Round: " + obj.RoundId + "</span>";
-//                }
-
-//                html = "<br>" + htmlRound + "<br>&#8594<span class='" + spanClass + "'><strong>" + obj.Step.PlayerId.split('pk2')[0] + "</strong>-" + obj.Step.Action + (obj.Step.Action == "take" ? " " + obj.Step.Amount : "") + "</span>";
-//                $('.logging').append(html);
-
-
-//                html = "";
-
-//                html = "<br>" + htmlRound + "<br>&#8594<span class='" + spanClass + "'><strong>" + obj.Step.PlayerId.split('pk2')[0] + "</strong>-" + obj.Step.Action + (obj.Step.Action == "take" ? (" " + obj.Step.Amount) : "") + "</span>";
-//                $('.CustomSideBar').append(html);
-//            } else {
-
-//                if (prevMessage != " ended hand ") {
-//                    $('.logging').append(" ended hand ");
-//                    $('.CustomSideBar').append(" ended hand ");
-//                }
-//                prevMessage = " ended hand ";
-//            }
-
-
-//        });
-
-
-
-//        if ($('.CustomSideBar:visible').length == 1) {
-
-//            $('.logging').hide();
-
-//        }
-
-//    } catch (err) {
-
-//        GameLogging(err, 2);
-
-//    }
-
-//}
-
-
-
 function ShowSummary() {
 
 
 }
-
-
 
 function ShowHandSettleHand() {
 
@@ -4585,31 +4008,6 @@ function ShowHandSettleHand() {
 
 
 
-
-            //var FinalTrans = DistributePotFinal();
-
-            //if (FinalTrans != undefined) {
-            //    if (FinalTrans.TransactionList != undefined && FinalTrans.TransactionList.length > 0) {
-            //        var htm2 = "<div class='row'><div class='col-md-12'><span>=================================</span></div>";
-
-            //        htm2 += "<div class='col-md-12'><span>" + FinalTrans.GameHand + "*</span></div>";
-
-
-            //        for (var j = 0; j < FinalTrans.TransactionList.length; j++) {
-            //            htm2 += "<div class='col-md-2'>" + (j + 1) + ". </div><div class='col-md-10'>" + FinalTrans.TransactionList[j] + "</div>";
-            //        }
-
-            //        htm2 += "</div>";
-            //        $('#SettlementModal').find('.SettleUp-tbody').append(htm2);
-
-            //    }
-
-            //}
-
-            // $('#SettlementModal').modal('show');
-
-
-
         }
     } catch (err) {
 
@@ -4617,18 +4015,12 @@ function ShowHandSettleHand() {
     }
 }
 
-
-
-
-
 //error report
 function SendErrorReport() {
 
 
 
 }
-
-
 
 function CalculateEndHand(val1) {
 
@@ -4714,7 +4106,348 @@ function CalculateEndHand(val1) {
     return resp;
 }
 
+/*
+     ------------------ END function definition ------------------
+*/
 
+
+function createCookie(cookieName, cookieValue, daysToExpire) {
+    var date = new Date();
+    date.setTime(date.getTime() + (daysToExpire * 24 * 60 * 60 * 1000));
+    document.cookie = cookieName + "=" + cookieValue + "; expires=" + date.toGMTString();
+}
+
+function accessCookie(cookieName) {
+    var name = cookieName + "=";
+    var allCookieArray = document.cookie.split(';');
+    for (var i = 0; i < allCookieArray.length; i++) {
+        var temp = allCookieArray[i].trim();
+        if (temp.indexOf(name) == 0)
+            return temp.substring(name.length, temp.length);
+    }
+    return "";
+}
+
+async function start() {
+    try {
+
+        if (connection.state === signalR.HubConnectionState.Connected)
+            return;
+
+        await connection.start();
+
+        if (connection.state === signalR.HubConnectionState.Connected || connection.state === signalR.HubConnectionState.Reconnecting) {
+            // join game 
+
+            //Disable send button until connection is established
+            //document.getElementById("sendButton").disabled = true;
+            var TempResponse = "";
+
+            connection.on("ReceiveMessage", function (message) {
+                var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                var encodedMsg = user + " says " + msg;
+                // var li = document.createElement("li");
+                // li.textContent = encodedMsg;
+                // document.getElementById("messagesList").appendChild(li);
+                TempResponse = message;
+                alert("Try again in few seconds..");
+
+
+            });
+
+            connection.on("ReceiveNotification", function (gamecode, playerid, notificationmessage) {
+                if (GameHash.GameId == gamecode) {
+
+                    //ViewNotification(notificationmessage);
+                }
+            });
+
+            connection.on("ReceiveCancelHandNotification", function (gamecode) {
+                $('#ModalInfoCancelHand').modal("show");
+            });
+
+            connection.on("ReceiveEndGameSummary", function (gamecode) {
+                try {
+
+                    $('.EndGameForCurrent').show();
+                    if (GameHash.GameId == gamecode) {
+
+                        //disable if sno is not dealer 
+                        if (GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].IsDealer != "Y") {
+
+                            $('.EndGameForCurrent').hide();
+                            ShowSummaryV2();
+
+                            //ShowSummary();
+                        }
+                    }
+                }
+                catch (err) {
+                    GameLogging(err, 2);
+                }
+            });
+
+            connection.on("ReceiveEndHandSummary", function (gamecode) {
+                try {
+                    $('.EndGameForCurrent').show();
+                    $('.SettleRound').show();
+
+                    if (GameHash.GameId == gamecode) {
+                        //disable if sno is not dealer 
+                        if (GameHash.ActivePlayers.filter(x => x.Sno == Sno)[0].IsDealer != "Y") {
+
+                            $('.SettleRound').hide();
+                            $('.EndGameForCurrent').hide();
+                            ShowHandSettleHand();
+                        }
+                    }
+
+                }
+                catch (err) {
+                    GameLogging(err, 2);
+
+                }
+
+            });
+
+            connection.on("OtherPlayerDisconnected", function (PlayerConnectionId, UserId) {
+                OtherPlayerDisconnected(PlayerConnectionId, UserId);
+            });
+
+            connection.on("ReceiveHashV1", function (IsHashUpdated) {
+                try {
+
+                    _GetUpdatedGameHash(GameHash.GameId);
+                    UpdateView();
+                    console.log(" ReceiveHashV1  " + GameHash.GameId);
+                }
+                catch (err) {
+                    GameLogging(err, 2);
+                }
+            });
+
+        }
+        console.log("SignalR Connected.");
+    } catch (err) {
+        console.log(err);
+        setTimeout(start, 5000);
+    }
+};
+
+//initialize Cookie
+function ClearCookieFunction() {
+    createCookie("UserIdentity", "", 2000);
+    location.reload();
+}
+
+// new validateuser function
+function ValidateUserConnection() {
+
+    var CustomCookie = accessCookie("UserIdentity");
+    //debugger;
+    if (CustomCookie == "") {
+        // ajax call to get unique identity
+
+        model = {
+            "request": "UNIQUEIDENTITY"
+        };
+
+        var dataResponse;
+        $.ajax({
+            url: 'api/GameV2/_GetUserIdentity',
+            type: 'POST',
+            contentType: 'application/json;',
+            data: JSON.stringify("uniqueidentity"),
+            async: false,
+            success: function (data) {
+                //debugger;
+                dataResponse = data;
+                alert("success");
+                console.log("url: 'api/GameV2/_CreateGame',---------success");
+            },
+            complete: function (res) {
+                //debugger;
+                console.log(dataResponse);
+                alert("complete");
+                //StartGame(dataResponse);
+                createCookie("UserIdentity", dataResponse, 2000);
+                createCookie("IsIdentityRenewed", "2", 2000);
+                localStorage.removeItem("LastGameCode"); //, GameCode);
+                localStorage.removeItem("UserId") //, model.UserId);
+                CustomCookie = accessCookie("UserIdentity");
+
+                var url = "/GameClass?UserIdentity=" + CustomCookie + "";
+                connection = new signalR.HubConnectionBuilder().withUrl(url)/*.withAutomaticReconnect([0, 0, 10000])*/.build();
+                connection.onclose(function () {
+                    start();
+                });
+
+                connection.onreconnected(connectionId => {
+                    console.log("connected with " + connectionId + " --> " + connection.state === signalR.HubConnectionState.Connected);
+                });
+
+                start();
+
+            }
+        });
+    }
+    else {
+        alert("already created");
+
+        var url = "/GameClass?UserIdentity=" + CustomCookie + "";
+        connection = new signalR.HubConnectionBuilder().withUrl(url)/*.withAutomaticReconnect([0, 0, 10000])*/.build();
+
+        connection.onclose(function () {
+            start();
+        });
+
+        connection.onreconnected(connectionId => {
+            console.log("connected with " + connectionId + " --> " + connection.state === signalR.HubConnectionState.Connected);
+        });
+
+        start();
+
+    }
+
+    // set cookie and start connection
+
+}
+
+function _GetUpdatedGameHash(gameid) {
+    $('.spinner').show();
+
+    model = {
+        "request": "UNIQUEIDENTITY"
+    };
+    var result;
+    $.ajax({
+        url: 'api/GameV2/_GetGameHash',
+        type: 'POST',
+        contentType: 'application/json;',
+        data: gameid == undefined ? GameHash.GameId : gameid,
+        async: false,
+        success: function (data) {
+            result = data;
+        },
+        complete: function (res) {
+            try {
+                GameHashOrginal = JSON.parse(result);
+                GameHash = JSON.parse(result);
+                //UpdateView();
+                $('.spinner').hide();
+            }
+            catch (err) {
+                $('.spinner').hide();
+                console.log(err);
+                ExceptionLogging(err);
+            }
+        }
+    })
+        .done(function (result) {
+        });
+
+
+}
+
+function OtherPlayerDisconnected(PlayerConnectionId, UserId) {
+    console.log('OtherPlayerDisconnected' + '   ' + PlayerConnectionId + '     ' + UserId);
+
+    console.log(" PlayerConnectionId " + PlayerConnectionId);
+    // var li = document.createElement("li");
+    // li.textContent = encodedMsg;
+    // document.getElementById("messagesList").appendChild(li);
+    ////debugger;
+    //
+    //GameHash = JSON.parse(GameHash1);
+    PlayerConnectionId = "pk2" + UserId.split("pk2")[1];
+
+    if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId)).length == 1) {
+        var snumber = GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].Sno;
+
+        GameHash.ContinuityPlayers = GameHash.ContinuityPlayers.filter(x => x.PlayerId.includes(PlayerConnectionId) == false);
+        //OnPlayerAction();
+        var grtrSno = -1; var lsrSno = -1;
+        //GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsFolded = "Y";
+        if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber).length > 0)
+            grtrSno = GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber)[0].Sno;
+        if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > 0).length > 0)
+            lsrSno = GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > 0)[0].Sno;
+
+        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent == "Y") {
+
+
+            $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsCurrent = "N"; });
+
+
+            if (GameHash.ActivePlayers.filter(x => x.Sno > snumber && x.IsFolded == "N").length == 0) {
+                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsDealer = "Y";
+                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsCurrent = "Y";
+                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].Sno);
+            }
+            else {
+                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > Sno)[0].IsDealer = "Y";
+                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].IsCurrent = "Y";
+                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].Sno);
+
+            }
+
+        }
+
+        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer == "Y") {
+
+            $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsDealer = "N"; });
+
+            if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded == "N").length == 0) {
+                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded == "N")[0].IsDealer = "Y";
+                // for removing deal duplication
+                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
+
+                    obj2.IsDealer = "N";
+
+                });
+                GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.IsFolded == "N" && x.Sno > snumber)[0].IsDealer = "Y";
+            }
+            else {
+                //GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > Sno)[0].IsDealer = "Y";
+                // for removing deal duplication
+                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
+
+                    obj2.IsDealer = "N";
+
+                });
+                // for removing deal duplication
+                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
+
+                    obj2.IsDealer = "N";
+
+                });
+                GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded == "N")[0].IsDealer = "Y";
+
+            }
+
+
+        }
+
+        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer = "N";
+        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent = "N";
+        //GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsFolded = "N";
+        GameHash.ContinuityPlayers.push(GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0]);
+
+        if (GameHash.ActivePlayers.filter(x => (x.Sno == Sno && (x.IsCurrent == "Y" || x.IsDealer == "Y"))).length > 0) {
+
+            UpdateGameHash(GameHash.GameId);
+
+        }
+
+    }
+
+    UpdateView();
+    //UpdateGameHash(GameHash.GameId);
+
+
+
+
+}
 
 
 $(window).on("load", function () {
@@ -4729,9 +4462,6 @@ $(window).on("load", function () {
 
         window.location = 'https://www.google.com/aclk?sa=l&ai=DChcSEwjf_q7Y7uLvAhVHtO0KHQG9AQEYABAAGgJkZw&sig=AOD64_2uz0f1EMIR2V4FLqk7-elfrDjgjA&q&adurl&ved=2ahUKEwi1rqjY7uLvAhXRa8AKHRQNAUUQ0Qx6BAgCEAE'
     }
-
-
-
 
     $('a').click(function (e) { e.preventDefault(); $(this).trigger('click'); });
 
@@ -4749,7 +4479,4 @@ $(window).on("load", function () {
         //ShowLoader();
 
     }
-
-
-
 });

@@ -21,9 +21,6 @@ namespace SignalRChat.Hubs
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
 
-
-
-
         public async Task SendMessage2(string user, string message, string test)
         {
             var val1 = Context.ConnectionId;
@@ -67,14 +64,9 @@ namespace SignalRChat.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
 
-
             UserHandler.ConnectedIds.Remove(Context.ConnectionId);
             return base.OnConnectedAsync();
         }
-
-
-
-
 
 
     }

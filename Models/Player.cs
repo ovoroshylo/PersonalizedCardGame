@@ -6,15 +6,15 @@ namespace PersonalizedCardGame.Models
     public partial class Player
     {
         public long Id { get; set; }
-        public string PlayerUniqueId { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
+        public string? PlayerUniqueId { get; set; }
+        public string? UserName { get; set; }
+        public string? Password { get; set; }
         public DateTime? Created { get; set; }
         public DateTime? Modified { get; set; }
         public bool? IsActive { get; set; }
-        public string SignalRconnectionId { get; set; }
+        public string? SignalRconnectionId { get; set; }
         public bool? IsConnected { get; set; }
-        public string CurrentGameCode { get; set; }
+        public string? CurrentGameCode { get; set; }
         public long? CurrentGameId { get; set; }
         public int? PlayerSno { get; set; }
         public bool? IsDealer { get; set; }

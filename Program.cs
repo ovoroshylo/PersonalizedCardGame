@@ -21,16 +21,18 @@ using PersonalizedCardGame.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
-//builder.Services.AddMvc().AddJsonOptions(options => options.JsonSerializerOptions.ContractResolver = new DefaultContractResolver());
+builder.Services.AddControllersWithViews().AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
+
 builder.Services.AddDbContext<DBCardGameContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DbCoreConnectionString") ?? throw new InvalidOperationException("Connection string 'DbCoreConnectionString' not found.")));
+
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     // This lambda determines whether user consent for non-essential cookies is needed for a given request.
     options.CheckConsentNeeded = context => true;
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(
@@ -60,15 +62,18 @@ DefaultFilesOptions DefaultFile = new DefaultFilesOptions();
 DefaultFile.DefaultFileNames.Clear();
 DefaultFile.DefaultFileNames.Add("Main.html");
 app.UseDefaultFiles(DefaultFile);
-
 app.UseStaticFiles();
+
 app.UseCookiePolicy();
+
 app.UseRouting();
 app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapHub<MyHub>("/myHub");
+
 app.MapHub<GameClass>("/GameClass", options =>
 {
     options.Transports = HttpTransportType.WebSockets;

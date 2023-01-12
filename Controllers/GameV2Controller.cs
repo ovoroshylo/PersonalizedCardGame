@@ -27,9 +27,11 @@ namespace PersonalizedCardGame.Controllers
 
         private IHubContext<GameClass> _HubContext;
         private CustomHelper _helper;
+        private DBCardGameContext _CardGameContext;
 
-        public GameV2Controller(IHubContext<GameClass> hubcontext)
+        public GameV2Controller(IHubContext<GameClass> hubcontext, DBCardGameContext context)
         {
+            _CardGameContext = context;
             if (_HubContext == null)
             {
                 _HubContext = hubcontext;
@@ -46,7 +48,6 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
-
         [HttpPost]
         public string TestGet1()
         {
@@ -54,63 +55,47 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
-
         [HttpPost]
         public IActionResult _CreateGame([FromBody] CreateGame model)
         {
             var resp = new CommonResponse();
             try
             {
+                var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
 
+                // temporary if not keeping the records
+                List<GameHashTemp> deps = _CardGameContext.GameHashTemp.Where(x => x.Created < DateTime.Now.AddDays(-10) && x.Modified < DateTime.Now.AddDays(-10)).ToList();
+                _CardGameContext.GameHashTemp.RemoveRange(deps);
+                _CardGameContext.SaveChanges();
 
-
-                using (var _context = new DBCardGameContext())
+                if (gameresp == null)
                 {
+                    resp.Message = "Success";
+                    resp.ResponseCode = "100";
 
-                    var gameresp = _context.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
+                    //for unittesting 
+                    JavaScriptSerializer js = new JavaScriptSerializer();
+                    var gameplayerhash = js.Deserialize<ActivePlayer>(model.GamePlayerHash);
 
-                    // temporary if not keeping the records
-                    List<GameHashTemp> deps = _context.GameHashTemp.Where(x => x.Created < DateTime.Now.AddDays(-10) && x.Modified < DateTime.Now.AddDays(-10)).ToList();
-                    List<ExceptionLog> deps1 = _context.ExceptionLog.Where(x => x.Modified < DateTime.Now.AddDays(-10)).ToList();
-                    _context.GameHashTemp.RemoveRange(deps);
-                    _context.ExceptionLog.RemoveRange(deps1);
-                    _context.SaveChanges();
+                    _CardGameContext.GameHashTemp.Add(new GameHashTemp() { Created = DateTime.Now, GameCode = model.GameCode, GameHash = model.GameHash, IsActive = true, GamePlayerHash = model.GamePlayerHash });
 
-                    if (gameresp == null)
-                    {
-                        resp.Message = "Success";
-                        resp.ResponseCode = "100";
+                    var currentplayer = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
+                    currentplayer.CurrentGameCode = model.GameCode;
+                    currentplayer.IsConnected = true;
+                    currentplayer.IsDealer = true;
+                    currentplayer.IsActive = true;
+                    currentplayer.UserName = model.UserId;
+                    _CardGameContext.SaveChanges();
 
-
-                        //for unittesting 
-                        JavaScriptSerializer js = new JavaScriptSerializer();
-                        var gameplayerhash = js.Deserialize<ActivePlayer>(model.GamePlayerHash);
-
-
-                        _context.GameHashTemp.Add(new GameHashTemp() { Created = DateTime.Now, GameCode = model.GameCode, GameHash = model.GameHash, IsActive = true, GamePlayerHash = model.GamePlayerHash });
-
-                        var currentplayer = _context.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
-                        currentplayer.CurrentGameCode = model.GameCode;
-                        currentplayer.IsConnected = true;
-                        currentplayer.IsDealer = true;
-                        currentplayer.IsActive = true;
-                        currentplayer.UserName = model.UserId;
-
-
-
-                        _context.SaveChanges();
-                        return Ok(resp);
-                    }
-                    else
-                    {
-                        resp.Message = "Game Already exist. Please try with new code";
-                        resp.ResponseCode = "150";
-                        return Ok(resp);
-
-
-                    }
-
+                    return Ok(resp);
                 }
+                else
+                {
+                    resp.Message = "Game Already exist. Please try with new code";
+                    resp.ResponseCode = "150";
+                    return Ok(resp);
+                }
+
             }
             catch (Exception ex)
             {
@@ -128,37 +113,31 @@ namespace PersonalizedCardGame.Controllers
 
             try
             {
-
-                using (var _context = new DBCardGameContext())
+                var resp = new CommonResponse();
+                var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode && x.IsActive == true).FirstOrDefault();
+                if (gameresp != null)
                 {
 
-                    var resp = new CommonResponse();
-                    var gameresp = _context.GameHashTemp.Where(x => x.GameCode == model.GameCode && x.IsActive == true).FirstOrDefault();
-                    if (gameresp != null)
-                    {
+                    gameresp.GamePlayerHash = model.GamePlayerHash;
 
-                        gameresp.GamePlayerHash = model.GamePlayerHash;
-
-
-                        var currentplayer = _context.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
-                        currentplayer.CurrentGameCode = model.GameCode;
-                        currentplayer.IsConnected = true;
-                        currentplayer.IsActive = true;
-                        currentplayer.UserName = model.UserId;
+                    var currentplayer = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
+                    currentplayer.CurrentGameCode = model.GameCode;
+                    currentplayer.IsConnected = true;
+                    currentplayer.IsActive = true;
+                    currentplayer.UserName = model.UserId;
 
 
-                        _context.SaveChanges();
-                        return Ok(gameresp);
+                    _CardGameContext.SaveChanges();
+                    return Ok(gameresp);
 
 
-                    }
-                    else
-                    {
-                        return Ok(null);
-
-                    }
-                    // PersonalizedCardGame.Hubs.GameClass.
                 }
+                else
+                {
+                    return Ok(null);
+
+                }
+                // PersonalizedCardGame.Hubs.GameClass.
             }
             catch (Exception ex)
             {
@@ -175,54 +154,46 @@ namespace PersonalizedCardGame.Controllers
             var resp = new PlayerActionResponse();
             try
             {
-                using (var _context = new DBCardGameContext())
+                var playertmp = _CardGameContext.Player.Where(x => x.UserName == model.PlayerUniqueId).FirstOrDefault();
+
+
+                if (playertmp != null)
                 {
-
-                    var playertmp = _context.Player.Where(x => x.UserName == model.PlayerUniqueId).FirstOrDefault();
-
-
-                    if (playertmp != null)
+                    if (model.ActionCode == "SitOut")
                     {
-                        if (model.ActionCode == "SitOut")
-                        {
-                            playertmp.IsSitOut = true;
-                            playertmp.Modified = DateTime.Now;
-                        }
-                        else if (model.ActionCode == "Rejoin")
-                        {
-
-                            playertmp.IsSitOut = false;
-                            playertmp.Modified = DateTime.Now;
-
-                        }
-
-
-                        _context.SaveChanges();
-                        resp.ErrCode = "100";
-                        resp.ErrMessage = "success";
+                        playertmp.IsSitOut = true;
+                        playertmp.Modified = DateTime.Now;
                     }
-                    else
+                    else if (model.ActionCode == "Rejoin")
                     {
-                        resp.ErrCode = "101";
-                        resp.ErrMessage = "Player not found";
+
+                        playertmp.IsSitOut = false;
+                        playertmp.Modified = DateTime.Now;
 
                     }
 
 
-                    _helper.ExceptionLog(new GameLoggingRequest()
-                    {
-                        ConnectionId = model.ConnectionId,
-                        ErrorLog = model.ActionCode,
-                        GameCode = model.GameCode,
-                        GameHash = model.GameHash,
-                        LogEntryTypeId = 1,
-                        UserIdentityFromCookie = model.PlayerUniqueId
-                    });
-
-
-
+                    _CardGameContext.SaveChanges();
+                    resp.ErrCode = "100";
+                    resp.ErrMessage = "success";
+                }
+                else
+                {
+                    resp.ErrCode = "101";
+                    resp.ErrMessage = "Player not found";
 
                 }
+
+
+                _helper.ExceptionLog(new GameLoggingRequest()
+                {
+                    ConnectionId = model.ConnectionId,
+                    ErrorLog = model.ActionCode,
+                    GameCode = model.GameCode,
+                    GameHash = model.GameHash,
+                    LogEntryTypeId = 1,
+                    UserIdentityFromCookie = model.PlayerUniqueId
+                });
             }
             catch (Exception ex)
             {
@@ -244,31 +215,24 @@ namespace PersonalizedCardGame.Controllers
             var resp = new PlayerActionResponse();
             try
             {
-                using (var _context = new DBCardGameContext())
+                var playerlist = _CardGameContext.Player.Where(x => x.CurrentGameCode == model.GameCode && x.Created > DateTime.Now.AddDays(-1)).OrderByDescending(x => x.Created).ToList().TakeLast(10);
+                if (playerlist != null)
                 {
-                    var playerlist = _context.Player.Where(x => x.CurrentGameCode == model.GameCode && x.Created > DateTime.Now.AddDays(-1)).OrderByDescending(x => x.Created).ToList().TakeLast(10);
-                    if (playerlist != null)
-                    {
-                        var lst = playerlist.ToList();
-                        return Ok(playerlist.ToList());
-
-                    }
-                    else
-                    {
-                        return Ok(new List<Player>());
-
-                    }
+                    var lst = playerlist.ToList();
+                    return Ok(playerlist.ToList());
 
                 }
+                else
+                {
+                    return Ok(new List<Player>());
 
+                }
             }
             catch (Exception ex)
             {
                 return Ok(null);
             }
         }
-
-
 
         [HttpPost]
         public IActionResult _GetGameHash([FromBody] string GameCode)
@@ -278,23 +242,18 @@ namespace PersonalizedCardGame.Controllers
                 if (!string.IsNullOrEmpty(GameCode))
                 {
 
-
-                    using (var _context = new DBCardGameContext())
+                    var resp = new CommonResponse();
+                    var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == GameCode && x.IsActive == true).FirstOrDefault();
+                    if (gameresp != null)
                     {
-                        var resp = new CommonResponse();
-                        var gameresp = _context.GameHashTemp.Where(x => x.GameCode == GameCode && x.IsActive == true).FirstOrDefault();
-                        if (gameresp != null)
-                        {
-                            return Ok(gameresp.GameHash);
-                        }
-                        else
-                        {
-                            return Ok("error- game not found " + GameCode);
-
-                        }
-                        // PersonalizedCardGame.Hubs.GameClass.
+                        return Ok(gameresp.GameHash);
                     }
+                    else
+                    {
+                        return Ok("error- game not found " + GameCode);
 
+                    }
+                    // PersonalizedCardGame.Hubs.GameClass.
                 }
                 else
                 {
@@ -317,67 +276,61 @@ namespace PersonalizedCardGame.Controllers
         {
 
             var resp = new CommonResponse();
-            using (var _context = new DBCardGameContext())
+
+            var PrevHash = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
+            var players = _CardGameContext.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
+            using (var transaction = _CardGameContext.Database.BeginTransaction())
             {
-
-                var PrevHash = _context.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
-                var players = _context.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
-                using (var transaction = _context.Database.BeginTransaction())
+                try
                 {
-
-                    try
+                    var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
+                    if (gameresp != null)
                     {
+                        gameresp.GameHash = model.GameHash;
+                        gameresp.Modified = DateTime.Now;
+                        var userid = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault().Id;
+                        _CardGameContext.GameLog.Add(new GameLog() { Created = DateTime.Now, GameId = gameresp.Id, PlayerId = userid, Action = model.ActionMessage });
+                        int updated = _CardGameContext.SaveChanges();
 
-                        var gameresp = _context.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
-                        if (gameresp != null)
+                        transaction.Commit();
+
+                        if (updated == 2)
                         {
-                            gameresp.GameHash = model.GameHash;
-                            gameresp.Modified = DateTime.Now;
-                            var userid = _context.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault().Id;
-                            _context.GameLog.Add(new GameLog() { Created = DateTime.Now, GameId = gameresp.Id, PlayerId = userid, Action = model.ActionMessage });
-                            int updated = _context.SaveChanges();
-
-                            transaction.Commit();
-
-                            if (updated == 2)
+                            foreach (var p in players)
                             {
-                                foreach (var p in players)
-                                {
-                                    _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", "100");
-                                }
-                                return Ok("success");
-
+                                _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", "100");
                             }
-                            else
-                            {
-                                return Ok("Error");
-                            }
+                            return Ok("success");
 
                         }
                         else
                         {
                             return Ok("Error");
-
                         }
+
                     }
-                    catch (Exception ex)
+                    else
                     {
-
-                        transaction.Rollback();
-
-                        foreach (var p in players)
-                        {
-                            _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", PrevHash.GameHash, "100");
-                        }
-
-                        ExceptionLogger("UpdateGameHash from" + model.UserId + " --> " + ex.InnerException.ToString());
-
-                        return Ok("error");
+                        return Ok("Error");
 
                     }
-                    // PersonalizedCardGame.Hubs.GameClass.
+                }
+                catch (Exception ex)
+                {
+
+                    transaction.Rollback();
+
+                    foreach (var p in players)
+                    {
+                        _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", PrevHash.GameHash, "100");
+                    }
+
+                    ExceptionLogger("UpdateGameHash from" + model.UserId + " --> " + ex.InnerException.ToString());
+
+                    return Ok("error");
 
                 }
+                // PersonalizedCardGame.Hubs.GameClass.
             }
         }
 
@@ -385,35 +338,28 @@ namespace PersonalizedCardGame.Controllers
         [HttpPost]
         public IActionResult _SendCancelHandNotification([FromBody] SendNotificationRequest model)
         {
-            using (var _context = new DBCardGameContext())
+            try
             {
 
-                try
+                var players = _CardGameContext.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
+                int updated = _CardGameContext.SaveChanges();
+
+                foreach (var p in players)
                 {
-
-                    var players = _context.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
-                    int updated = _context.SaveChanges();
-
-                    foreach (var p in players)
-                    {
-                        _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveCancelHandNotification", "100");
-                    }
-                    return Ok("success");
-
-
+                    _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveCancelHandNotification", "100");
                 }
-                catch (Exception ex)
-                {
-                    return Ok("error");
+                return Ok("success");
 
-                }
-                // PersonalizedCardGame.Hubs.GameClass.
 
             }
+            catch (Exception ex)
+            {
+                return Ok("error");
+
+            }
+            // PersonalizedCardGame.Hubs.GameClass.
 
         }
-
-
 
         [HttpPost]
         public string ExceptionLogger([FromBody] string request)
@@ -451,25 +397,16 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
-
-
         // first time if player dont have unique id 
         [HttpPost]
         public JsonResult _GetUserIdentity([FromBody] string request)
         {
             try
             {
-
-                using (var _context = new DBCardGameContext())
-                {
-
-
-                    var guid = Guid.NewGuid().ToString();
-
-                    _context.Player.Add(new Player() { Created = DateTime.Now, PlayerUniqueId = guid, IsActive = true });
-                    _context.SaveChanges();
-                    return new JsonResult(guid);
-                }
+                var guid = Guid.NewGuid().ToString();
+                _CardGameContext.Player.Add(new Player() { Created = DateTime.Now, PlayerUniqueId = guid, IsActive = true });
+                _CardGameContext.SaveChanges();
+                return new JsonResult(guid);
 
             }
             catch (Exception ex)
@@ -486,28 +423,21 @@ namespace PersonalizedCardGame.Controllers
         {
             try
             {
-                using (var _context = new DBCardGameContext())
+
+                JavaScriptSerializer js = new JavaScriptSerializer();
+                var req = js.Deserialize<UpdateUserIdentityRequest>(request);
+
+
+                var player = _CardGameContext.Player.Where(x => x.PlayerUniqueId == req.PlayerUniqueId).FirstOrDefault();
+                if (player != null)
                 {
-
-
-                    JavaScriptSerializer js = new JavaScriptSerializer();
-                    var req = js.Deserialize<UpdateUserIdentityRequest>(request);
-
-
-                    var player = _context.Player.Where(x => x.PlayerUniqueId == req.PlayerUniqueId).FirstOrDefault();
-                    if (player != null)
-                    {
-                        player.LastActionTime = DateTime.Now;
-                        player.Modified = DateTime.Now;
-                        player.SignalRconnectionId = req.SignalRConnectionId;
-                        player.IsConnected = true;
-
-                    }
-                    _context.SaveChanges();
-
-
+                    player.LastActionTime = DateTime.Now;
+                    player.Modified = DateTime.Now;
+                    player.SignalRconnectionId = req.SignalRConnectionId;
+                    player.IsConnected = true;
 
                 }
+                _CardGameContext.SaveChanges();
 
                 return Ok("success");
 
@@ -515,12 +445,8 @@ namespace PersonalizedCardGame.Controllers
             catch (Exception ex)
             {
                 return Ok("error");
-
-
             }
 
         }
-
-
     }
 }

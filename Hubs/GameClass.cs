@@ -18,6 +18,12 @@ namespace PersonalizedCardGame.Hubs
         public static List<string> ConnectionIds = new List<string>();
         public static bool IsBusy = false;
         private static readonly ConcurrentDictionary<string, string> Users = new ConcurrentDictionary<string, string>();
+        private readonly DBCardGameContext _dbCardGameContext;
+
+        public GameClass(DBCardGameContext dbCardGameContext)
+        {
+            _dbCardGameContext = dbCardGameContext;
+        }
 
         public int SendMessage(string user, string message)
         {
@@ -57,16 +63,10 @@ namespace PersonalizedCardGame.Hubs
             await Clients.All.SendAsync("ReceiveNotification", gamecode, playerid, notificationmessage);
         }
 
-
         public async Task GameLog(string GameCode, string ActionName, string PlayerUniqueId, string PlayerName)
         {
 
-
-
         }
-
-
-
 
         public async Task SendEndGameSummary(string gamecode)
         {
@@ -79,8 +79,6 @@ namespace PersonalizedCardGame.Hubs
             await Clients.All.SendAsync("ReceiveEndGameSummary", gamecode);
         }
 
-
-
         public async Task SendEndHandSummary(string gamecode)
         {
             var val1 = Context.ConnectionId;
@@ -91,9 +89,6 @@ namespace PersonalizedCardGame.Hubs
 
             await Clients.All.SendAsync("ReceiveEndHandSummary", gamecode);
         }
-
-
-
 
         public async Task SendMessage2(string user, string message, string test)
         {
@@ -134,34 +129,24 @@ namespace PersonalizedCardGame.Hubs
             //var x = Clients.Caller
 
             HttpContext httpContext = Context.GetHttpContext();
-            //xx.Session.TryGetValue("UserId",out a);
-            // var CurrentUser = Encoding.ASCII.GetString(a);
-            //xx.Request.HttpContext.
+
             var customQuerystring = httpContext.Request.QueryString.Value.Split("&").FirstOrDefault().Split("=").LastOrDefault();
 
-
-            using (var _context = new DBCardGameContext())
+            if (customQuerystring != null)
             {
-
-                var player = _context.Player.Where(x => x.PlayerUniqueId == customQuerystring).FirstOrDefault();
+                var player = _dbCardGameContext.Player.Where(x => x.PlayerUniqueId == customQuerystring).FirstOrDefault();
                 if (player != null)
                 {
                     player.LastActionTime = DateTime.Now;
                     player.Modified = DateTime.Now;
                     player.SignalRconnectionId = Context.ConnectionId;
                     player.IsConnected = true;
-
-                    _context.SaveChanges();
-
+                    _dbCardGameContext.SaveChanges();
                 }
                 else
                 {
-
-                    _context.Player.Add(new Player() { Created = DateTime.Now, IsConnected = true, LastActionTime = DateTime.Now, PlayerUniqueId = customQuerystring, SignalRconnectionId = Context.ConnectionId });
-                    _context.SaveChanges();
-
-
-
+                    _dbCardGameContext.Player.Add(new Player() { Created = DateTime.Now, IsConnected = true, LastActionTime = DateTime.Now, PlayerUniqueId = customQuerystring, SignalRconnectionId = Context.ConnectionId });
+                    _dbCardGameContext.SaveChanges();
                 }
             }
             return base.OnConnectedAsync();
@@ -170,49 +155,44 @@ namespace PersonalizedCardGame.Hubs
         public override Task OnDisconnectedAsync(Exception exception)
         {
 
-
-            using (var _context = new DBCardGameContext())
+            try
             {
 
-                try
+                var disconnectedplayer = _dbCardGameContext.Player.Where(x => x.SignalRconnectionId == Context.ConnectionId).FirstOrDefault();
+
+                if (disconnectedplayer != null)
                 {
 
-                    var disconnectedplayer = _context.Player.Where(x => x.SignalRconnectionId == Context.ConnectionId).FirstOrDefault();
-
-                    if (disconnectedplayer != null)
+                    if (disconnectedplayer.CurrentGameCode != "" && disconnectedplayer.CurrentGameCode != null)
                     {
 
-                        if (disconnectedplayer.CurrentGameCode != "" && disconnectedplayer.CurrentGameCode != null)
+
+
+                        disconnectedplayer.IsConnected = false;
+                        disconnectedplayer.IsActive = false;
+                        disconnectedplayer.IsCurrent = false;
+                        disconnectedplayer.IsDealer = false;
+                        disconnectedplayer.IsFolded = false;
+
+                        _dbCardGameContext.SaveChanges();
+
+
+                        var allrelatedplayers = _dbCardGameContext.Player.Where(x => x.CurrentGameCode == disconnectedplayer.CurrentGameCode).ToList();
+                        foreach (var ar in allrelatedplayers)
                         {
-
-
-
-                            disconnectedplayer.IsConnected = false;
-                            disconnectedplayer.IsActive = false;
-                            disconnectedplayer.IsCurrent = false;
-                            disconnectedplayer.IsDealer = false;
-                            disconnectedplayer.IsFolded = false;
-
-                            _context.SaveChanges();
-
-
-                            var allrelatedplayers = _context.Player.Where(x => x.CurrentGameCode == disconnectedplayer.CurrentGameCode).ToList();
-                            foreach (var ar in allrelatedplayers)
-                            {
-                                Clients.Client(ar.SignalRconnectionId).SendAsync("OtherPlayerDisconnected", Context.ConnectionId, disconnectedplayer.UserName);
-
-                            }
-
+                            Clients.Client(ar.SignalRconnectionId).SendAsync("OtherPlayerDisconnected", Context.ConnectionId, disconnectedplayer.UserName);
 
                         }
+
+
                     }
                 }
-                catch (Exception ex)
-                {
+            }
+            catch (Exception ex)
+            {
 
 
 
-                }
             }
 
 
@@ -226,13 +206,5 @@ namespace PersonalizedCardGame.Hubs
             //return base.OnDisconnectedAsync();
 
         }
-
-
-
-
     }
-
-
-
-
 }
