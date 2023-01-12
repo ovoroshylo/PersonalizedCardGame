@@ -18,12 +18,10 @@ function ReceiveNotification(gamecode, playerid, notificationmessage) {
 
 
 function SendNotification(gamecode, playerid, notificationmessage) {
-    //connection.invoke("SendNotification", gamecode, playerid, notificationmessage).catch(function (err) {
-    //    return console.error(err.toString());
-    //});
-    //event.preventDefault();
-
-
+    connection.invoke("SendNotification", gamecode, playerid, notificationmessage).catch(function (err) {
+        return console.error(err.toString());
+    });
+    event.preventDefault();
 }
 
 

@@ -126,7 +126,6 @@ namespace PersonalizedCardGame.Controllers
                     currentplayer.IsActive = true;
                     currentplayer.UserName = model.UserId;
 
-
                     _CardGameContext.SaveChanges();
                     return Ok(gameresp);
 
@@ -251,7 +250,6 @@ namespace PersonalizedCardGame.Controllers
                     else
                     {
                         return Ok("error- game not found " + GameCode);
-
                     }
                     // PersonalizedCardGame.Hubs.GameClass.
                 }

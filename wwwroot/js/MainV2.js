@@ -1148,11 +1148,7 @@ $(document).on("click", ".Ante", function () {
         GameHash.PotSize = parseFloat(GameHash.PotSize) + parseFloat(potAdd);
         var msg = "Ante: " + anteValue + "";
         SendNotification(GameHash.GameId, "", msg);
-
-
-
         UpdateGameHash(GameHash.GameId);
-
 
     } else {
         alert("No Active Player");
@@ -3057,7 +3053,6 @@ function OnPlayerAction() {
 
 function ViewNotification(msg) {
 
-
     var $htmlNotif = $('.AlertNotification').html().replace("[message]", msg);
 
     $('.GeneralMessage').append($htmlNotif);
@@ -4157,7 +4152,6 @@ async function start() {
 
             connection.on("ReceiveNotification", function (gamecode, playerid, notificationmessage) {
                 if (GameHash.GameId == gamecode) {
-
                     //ViewNotification(notificationmessage);
                 }
             });
@@ -4216,7 +4210,6 @@ async function start() {
 
             connection.on("ReceiveHashV1", function (IsHashUpdated) {
                 try {
-
                     _GetUpdatedGameHash(GameHash.GameId);
                     UpdateView();
                     console.log(" ReceiveHashV1  " + GameHash.GameId);
@@ -4262,13 +4255,11 @@ function ValidateUserConnection() {
             success: function (data) {
                 //debugger;
                 dataResponse = data;
-                alert("success");
                 console.log("url: 'api/GameV2/_CreateGame',---------success");
             },
             complete: function (res) {
                 //debugger;
                 console.log(dataResponse);
-                alert("complete");
                 //StartGame(dataResponse);
                 createCookie("UserIdentity", dataResponse, 2000);
                 createCookie("IsIdentityRenewed", "2", 2000);
@@ -4292,21 +4283,15 @@ function ValidateUserConnection() {
         });
     }
     else {
-        alert("already created");
-
         var url = "/GameClass?UserIdentity=" + CustomCookie + "";
         connection = new signalR.HubConnectionBuilder().withUrl(url)/*.withAutomaticReconnect([0, 0, 10000])*/.build();
-
         connection.onclose(function () {
             start();
         });
-
         connection.onreconnected(connectionId => {
             console.log("connected with " + connectionId + " --> " + connection.state === signalR.HubConnectionState.Connected);
         });
-
         start();
-
     }
 
     // set cookie and start connection
@@ -4324,7 +4309,7 @@ function _GetUpdatedGameHash(gameid) {
         url: 'api/GameV2/_GetGameHash',
         type: 'POST',
         contentType: 'application/json;',
-        data: gameid == undefined ? GameHash.GameId : gameid,
+        data: JSON.stringify(gameid === undefined ? GameHash.GameId : gameid),
         async: false,
         success: function (data) {
             result = data;
@@ -4343,10 +4328,8 @@ function _GetUpdatedGameHash(gameid) {
             }
         }
     })
-        .done(function (result) {
-        });
-
-
+    .done(function (result) {
+    });
 }
 
 function OtherPlayerDisconnected(PlayerConnectionId, UserId) {
