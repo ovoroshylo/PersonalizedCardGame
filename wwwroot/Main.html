@@ -1,0 +1,967 @@
+﻿﻿
+<!DOCTYPE html>
+<html lang="en">
+<body>
+    <header>
+        <!--<script>
+            var _rollbarConfig = {
+                accessToken: "ff575c5aeb324f369ab2932384c697e1",
+                captureUncaught: true,
+                captureUnhandledRejections: true,
+                payload: {
+                    environment: "production"
+                }
+            };
+            // Rollbar Snippet
+            !function (r) { var e = {}; function o(n) { if (e[n]) return e[n].exports; var t = e[n] = { i: n, l: !1, exports: {} }; return r[n].call(t.exports, t, t.exports, o), t.l = !0, t.exports } o.m = r, o.c = e, o.d = function (r, e, n) { o.o(r, e) || Object.defineProperty(r, e, { enumerable: !0, get: n }) }, o.r = function (r) { "undefined" != typeof Symbol && Symbol.toStringTag && Object.defineProperty(r, Symbol.toStringTag, { value: "Module" }), Object.defineProperty(r, "__esModule", { value: !0 }) }, o.t = function (r, e) { if (1 & e && (r = o(r)), 8 & e) return r; if (4 & e && "object" == typeof r && r && r.__esModule) return r; var n = Object.create(null); if (o.r(n), Object.defineProperty(n, "default", { enumerable: !0, value: r }), 2 & e && "string" != typeof r) for (var t in r) o.d(n, t, function (e) { return r[e] }.bind(null, t)); return n }, o.n = function (r) { var e = r && r.__esModule ? function () { return r.default } : function () { return r }; return o.d(e, "a", e), e }, o.o = function (r, e) { return Object.prototype.hasOwnProperty.call(r, e) }, o.p = "", o(o.s = 0) }([function (r, e, o) { "use strict"; var n = o(1), t = o(5); _rollbarConfig = _rollbarConfig || {}, _rollbarConfig.rollbarJsUrl = _rollbarConfig.rollbarJsUrl || "https://cdn.rollbar.com/rollbarjs/refs/tags/v2.19.2/rollbar.min.js", _rollbarConfig.async = void 0 === _rollbarConfig.async || _rollbarConfig.async; var a = n.setupShim(window, _rollbarConfig), l = t(_rollbarConfig); window.rollbar = n.Rollbar, a.loadFull(window, document, !_rollbarConfig.async, _rollbarConfig, l) }, function (r, e, o) { "use strict"; var n = o(2), t = o(3); function a(r) { return function () { try { return r.apply(this, arguments) } catch (r) { try { console.error("[Rollbar]: Internal error", r) } catch (r) { } } } } var l = 0; function i(r, e) { this.options = r, this._rollbarOldOnError = null; var o = l++; this.shimId = function () { return o }, "undefined" != typeof window && window._rollbarShims && (window._rollbarShims[o] = { handler: e, messages: [] }) } var s = o(4), d = function (r, e) { return new i(r, e) }, c = function (r) { return new s(d, r) }; function u(r) { return a((function () { var e = this, o = Array.prototype.slice.call(arguments, 0), n = { shim: e, method: r, args: o, ts: new Date }; window._rollbarShims[this.shimId()].messages.push(n) })) } i.prototype.loadFull = function (r, e, o, n, t) { var l = !1, i = e.createElement("script"), s = e.getElementsByTagName("script")[0], d = s.parentNode; i.crossOrigin = "", i.src = n.rollbarJsUrl, o || (i.async = !0), i.onload = i.onreadystatechange = a((function () { if (!(l || this.readyState && "loaded" !== this.readyState && "complete" !== this.readyState)) { i.onload = i.onreadystatechange = null; try { d.removeChild(i) } catch (r) { } l = !0, function () { var e; if (void 0 === r._rollbarDidLoad) { e = new Error("rollbar.js did not load"); for (var o, n, a, l, i = 0; o = r._rollbarShims[i++];)for (o = o.messages || []; n = o.shift();)for (a = n.args || [], i = 0; i < a.length; ++i)if ("function" == typeof (l = a[i])) { l(e); break } } "function" == typeof t && t(e) }() } })), d.insertBefore(i, s) }, i.prototype.wrap = function (r, e, o) { try { var n; if (n = "function" == typeof e ? e : function () { return e || {} }, "function" != typeof r) return r; if (r._isWrap) return r; if (!r._rollbar_wrapped && (r._rollbar_wrapped = function () { o && "function" == typeof o && o.apply(this, arguments); try { return r.apply(this, arguments) } catch (o) { var e = o; throw e && ("string" == typeof e && (e = new String(e)), e._rollbarContext = n() || {}, e._rollbarContext._wrappedSource = r.toString(), window._rollbarWrappedError = e), e } }, r._rollbar_wrapped._isWrap = !0, r.hasOwnProperty)) for (var t in r) r.hasOwnProperty(t) && (r._rollbar_wrapped[t] = r[t]); return r._rollbar_wrapped } catch (e) { return r } }; for (var p = "log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,captureEvent,captureDomContentLoaded,captureLoad".split(","), f = 0; f < p.length; ++f)i.prototype[p[f]] = u(p[f]); r.exports = { setupShim: function (r, e) { if (r) { var o = e.globalAlias || "Rollbar"; if ("object" == typeof r[o]) return r[o]; r._rollbarShims = {}, r._rollbarWrappedError = null; var l = new c(e); return a((function () { e.captureUncaught && (l._rollbarOldOnError = r.onerror, n.captureUncaughtExceptions(r, l, !0), e.wrapGlobalEventHandlers && t(r, l, !0)), e.captureUnhandledRejections && n.captureUnhandledRejections(r, l, !0); var a = e.autoInstrument; return !1 !== e.enabled && (void 0 === a || !0 === a || "object" == typeof a && a.network) && r.addEventListener && (r.addEventListener("load", l.captureLoad.bind(l)), r.addEventListener("DOMContentLoaded", l.captureDomContentLoaded.bind(l))), r[o] = l, l }))() } }, Rollbar: c } }, function (r, e, o) { "use strict"; function n(r, e, o, n) { r._rollbarWrappedError && (n[4] || (n[4] = r._rollbarWrappedError), n[5] || (n[5] = r._rollbarWrappedError._rollbarContext), r._rollbarWrappedError = null); var t = e.handleUncaughtException.apply(e, n); o && o.apply(r, n), "anonymous" === t && (e.anonymousErrorsPending += 1) } r.exports = { captureUncaughtExceptions: function (r, e, o) { if (r) { var t; if ("function" == typeof e._rollbarOldOnError) t = e._rollbarOldOnError; else if (r.onerror) { for (t = r.onerror; t._rollbarOldOnError;)t = t._rollbarOldOnError; e._rollbarOldOnError = t } e.handleAnonymousErrors(); var a = function () { var o = Array.prototype.slice.call(arguments, 0); n(r, e, t, o) }; o && (a._rollbarOldOnError = t), r.onerror = a } }, captureUnhandledRejections: function (r, e, o) { if (r) { "function" == typeof r._rollbarURH && r._rollbarURH.belongsToShim && r.removeEventListener("unhandledrejection", r._rollbarURH); var n = function (r) { var o, n, t; try { o = r.reason } catch (r) { o = void 0 } try { n = r.promise } catch (r) { n = "[unhandledrejection] error getting `promise` from event" } try { t = r.detail, !o && t && (o = t.reason, n = t.promise) } catch (r) { } o || (o = "[unhandledrejection] error getting `reason` from event"), e && e.handleUnhandledRejection && e.handleUnhandledRejection(o, n) }; n.belongsToShim = o, r._rollbarURH = n, r.addEventListener("unhandledrejection", n) } } } }, function (r, e, o) { "use strict"; function n(r, e, o) { if (e.hasOwnProperty && e.hasOwnProperty("addEventListener")) { for (var n = e.addEventListener; n._rollbarOldAdd && n.belongsToShim;)n = n._rollbarOldAdd; var t = function (e, o, t) { n.call(this, e, r.wrap(o), t) }; t._rollbarOldAdd = n, t.belongsToShim = o, e.addEventListener = t; for (var a = e.removeEventListener; a._rollbarOldRemove && a.belongsToShim;)a = a._rollbarOldRemove; var l = function (r, e, o) { a.call(this, r, e && e._rollbar_wrapped || e, o) }; l._rollbarOldRemove = a, l.belongsToShim = o, e.removeEventListener = l } } r.exports = function (r, e, o) { if (r) { var t, a, l = "EventTarget,Window,Node,ApplicationCache,AudioTrackList,ChannelMergerNode,CryptoOperation,EventSource,FileReader,HTMLUnknownElement,IDBDatabase,IDBRequest,IDBTransaction,KeyOperation,MediaController,MessagePort,ModalWindow,Notification,SVGElementInstance,Screen,TextTrack,TextTrackCue,TextTrackList,WebSocket,WebSocketWorker,Worker,XMLHttpRequest,XMLHttpRequestEventTarget,XMLHttpRequestUpload".split(","); for (t = 0; t < l.length; ++t)r[a = l[t]] && r[a].prototype && n(e, r[a].prototype, o) } } }, function (r, e, o) { "use strict"; function n(r, e) { this.impl = r(e, this), this.options = e, function (r) { for (var e = function (r) { return function () { var e = Array.prototype.slice.call(arguments, 0); if (this.impl[r]) return this.impl[r].apply(this.impl, e) } }, o = "log,debug,info,warn,warning,error,critical,global,configure,handleUncaughtException,handleAnonymousErrors,handleUnhandledRejection,_createItem,wrap,loadFull,shimId,captureEvent,captureDomContentLoaded,captureLoad".split(","), n = 0; n < o.length; n++)r[o[n]] = e(o[n]) }(n.prototype) } n.prototype._swapAndProcessMessages = function (r, e) { var o, n, t; for (this.impl = r(this.options); o = e.shift();)n = o.method, t = o.args, this[n] && "function" == typeof this[n] && ("captureDomContentLoaded" === n || "captureLoad" === n ? this[n].apply(this, [t[0], o.ts]) : this[n].apply(this, t)); return this }, r.exports = n }, function (r, e, o) { "use strict"; r.exports = function (r) { return function (e) { if (!e && !window._rollbarInitialized) { for (var o, n, t = (r = r || {}).globalAlias || "Rollbar", a = window.rollbar, l = function (r) { return new a(r) }, i = 0; o = window._rollbarShims[i++];)n || (n = o.handler), o.handler._swapAndProcessMessages(l, o.messages); window[t] = n, window._rollbarInitialized = !0 } } } }]);
+            // End Rollbar Snippet
+        </script>-->
+        <script src="lib/jquery/dist/jquery.js"></script>
+        <script src="../../js/popper.min.js"></script>
+
+        <script src="js/bootstrap.min.js"></script>
+
+
+        <script src="js/CommonGame.js"></script>
+        <script src="js/MainV2.js"></script>
+        <script src="js/signalr.js"></script>
+        <script src="js/GameController.js"></script>
+
+        <link href="Bootstrap4/css/bootstrap.css" rel="stylesheet" />
+        <link href="css/Carousel.min.css" rel="stylesheet" />
+        <link href="css/Carousel.css" rel="stylesheet" />
+        <link href="css/Main.css" rel="stylesheet" />
+        <link href="css/Font-Awesome.min.css" rel="stylesheet" />
+        <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    </header>
+
+
+    <style>
+
+        div#potdiv {
+            padding: 0 !important;
+        }
+
+        .modal {
+            background: rgba(22, 1, 1, 0.5) !important;
+        }
+
+        body {
+            margin-top: 10px !important;
+        }
+
+        @media screen and (max-width: 999px) {
+        }
+
+        .alert-success {
+            margin-left: 0% !important;
+            margin-right: 0% !important;
+        }
+    </style>
+    <div class="modal" id="ModalInfo" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#ModalInfo').hide('modal');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Do you want to leave the pot for the next hand?
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="$('#ModalInfo').hide('modal');">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="ModalInfoCancelHandPrompt">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#ModalInfoCancelHandPrompt').modal('hide');$('#ModalInfoCancelHand').modal('hide')">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Current Hand has been Cancelled By The Dealer
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="ModalInfoCancelHandPrompt_Yes();">Yes</button>
+                    <button type="button" class="btn btn-default" onclick="$('#ModalInfoCancelHandPrompt').modal('hide');">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal" id="ModalInfoCancelHand">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#ModalInfoCancelHand').modal('hide');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Current Hand has been Cancelled By The Dealer
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="$('#ModalInfoCancelHand').modal('hide');">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <div class="modal" id="PassDealPopUp" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#PassDealPopUp').hide('modal');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <label>Choose</label>
+                    <div class="PassDealPopUpPlayers"></div>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="$('#PassDealPopUp').hide('modal');">OK</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="MyModalEndHand" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#myModal').hide('modal');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Do you want to leave the pot for the next hand?
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger MyModalEndHand_Yes">Yes</button>
+                    <button type="button" class="btn btn-danger MyModalEndHand_No">No</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="modal" id="myModalLeave" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#myModalLeave').modal('hide');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Modal body..
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger BtnLeave_Yes" data-dismiss="modal">Yes</button>
+                    <button type="button" class="btn btn-primary BtnLeave_No" data-dismiss="modal" onclick="$('#myModalLeave').modal('hide');">No</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="modal" id="myModal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" onclick="$('#myModal').hide('modal');">×</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    Modal body..
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="$('#myModal').hide('modal');$('.CommunityCard').removeClass('Selected');">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="ResumeGameModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Page reloaded.</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Click resume to continue the game
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary EndGameForCurrent" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary BtnResume">Resume</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="row spinner" style="position: absolute;width: 100%;height: 80%;background: whitesmoke;z-index: 300;opacity: 0.7;text-align: center;display: none;top: 18%;"> <span style=" color: black; font-size: x-large;margin:32.5%;width:100%;">Please wait..</span> </div>
+
+
+    <div id="HomeScreen" class="container">
+
+        <div class="row">
+            <h2 class="mx-auto m-3">Welcome !</h2>
+        </div>
+
+        <!-- Copied from here -->
+
+        <div class="row">
+            <div class="col-md-5 p-2 MainPageDivs">
+                <h2>Create Game</h2>
+                <ul>
+                    <li>Put your name in the "Host name" field below</li>
+                    <li>Click the "Create" button</li>
+                    <li>Share the invitation code number with your friends</li>
+                    <li>Click the "Start" button</li>
+                </ul>
+                <div class="form-group">
+                    <label for="UserName">Host name:</label>
+                    <input type="text" class="form-control d-inline w-50" id="UserName" placeholder="Host name" name="UserName" required>
+                    <button class="btn btn-primary GenerateCode">Create</button>
+                </div>
+                <div class="form-group">
+                    <div class="d-flex m-2 text-center">
+                    </div>
+                    <div>
+                        <label for="pwd">Invitation Code:</label>
+                        <!--<input type="text" class="form-control w-50 d-inline" id="GameCode" placeholder="Code to share" name="GameCode" required disabled>-->
+                        <input type="text" class="form-control w-50 d-inline" id="GameCode" placeholder="Code to share" name="GameCode" required readonly><button class="ml-2" onclick="copyInvitation()"><i class="far fa-copy"></i></button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary BtnStart mb-2">Start</button>
+
+                <br />
+            </div>
+            <div class="col-2 orImage mx-auto">
+
+                <img src="images/ORImage.png" style="width:50%;margin:20%;" />
+            </div>
+
+            <div class="col-md-5 MainPageDivs">
+                <h2>Join Game</h2>
+                <ul>
+                    <li>Put your name in the "Guest name" field below.</li>
+                    <li>Paste the invitation code into the "Invitation Code" field</li>
+                    <li>Click the "Join" button</li>
+                </ul>
+                <div class="form-group">
+                    <label for="email">Guest Name:</label>
+                    <input type="email" class="form-control d-inline w-50" id="UserName1" placeholder="Your name" name="UserName1" required>
+                </div>
+                <div class="form-group">
+                    <label for="pwd">Invitation Code:</label>
+                    <input type="text" class="form-control d-inline w-50" id="GameCode1" placeholder="Enter your invitation code" name="GameCode1" maxlength="10" required>
+                </div>
+
+                <button class="btn btn-primary BtnJoin mb-2">Join</button>
+                <button type="submit" class="btn btn-danger BtnClearCookie mb-2 d-none" onclick="ClearCookieFunction();">Clear Cookie</button>
+                <br />
+            </div>
+
+
+        </div>
+
+
+        <!-- Copied till here-->
+
+    </div>
+
+    <div class="container-fluid bg-black p-0" id="GameBoard" style="display:none;">
+        <div class="row">
+            <div class="d-none col-2 d-sm-block bg-black text-light my-top mx-auto">
+                <div class="DivGameCode text-center mt-1" id="inviteCode"></div>
+                <div class="CustomSideBar" style="">
+                    col-sm log displays vertically  here, latest play at top
+
+                </div>
+            </div>
+            <div class="col-12 col-sm-8">
+                <div class="container p-0">
+
+                    <div class="modal fade" id="SettlementModal" style="display: none;opacity:1;">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="exampleModalLabel">Amount Settled</h5><button type="button" class="ml-5 btn btn-primary SettleRound" data-dismiss="modal">New Deal</button>
+                                    <button type="button" class="close" data-dismiss="modal" onclick="$('#SettlementModal').hide('modal');">×</button>
+                                </div>
+
+                                <!-- Modal body -->
+                                <div class="modal-body modal-body-SettleUp left">
+                                    <div class="SettleUp-tbody left"></div>
+                                </div>
+
+                                <!-- Modal footer -->
+                                <div class="modal-footer">
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="modal" id="SettlementModalEndGame" style="display: none;opacity:1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+
+                                <!-- Modal Header -->
+                                <div class="modal-header">
+                                    <h4 class="text-center">Are you sure you want to end the game?</h4><button type="button" class="close" data-dismiss="modal" onclick="$('#SettlementModalEndGame').hide('modal');">×</button>
+                                </div>
+
+                                <!-- Modal body -->
+                                <div class="modal-body modal-body-SettleUp left">
+                                    <div class="row SettleUp-tbody left"></div>
+                                </div>
+
+                                <!-- Modal footer -->
+                                <div class="modal-footer justify-content-between">
+                                    <button type="button" class="btn btn-warning" data-dismiss="modal" onclick="$('#SettlementModalEndGame').hide('modal');">Cancel</button>
+                                    <button type="button" class="btn btn-danger EndGameForCurrent" data-dismiss="modal">End Game</button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+
+
+
+
+                    <div class="row">
+
+
+
+                        <div class="logging col-12 alert alert-warning" id="logging">
+                            <span>Game Started</span>
+                        </div>
+                        <hr />
+                    </div>
+
+
+
+
+
+                    <div class="row GeneralMessage" style="position: fixed;z-index:400;width:60%;">
+
+                    </div>
+
+                    <div class="row">
+                        <div class="AlertNotification" style="display:none;z-index:100;">
+                            <div class="alert alert-success" id="success-alert" style="z-index:100;">
+                                <button type="button" class="close" data-dismiss="alert">Close</button>
+                                [message] <strong>!</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="table">
+                        <div class="row">
+                            <div class="col-4 seat">
+                                <div class="Player3 Player" data-Sno="" data-sliderIndex="0">
+                                    <div class="d-inline-block">
+                                        <div class="row m-0 p-1">
+                                            <div class="PlayerName col badge badge-danger">Player 6</div>
+                                            <div class="PlayerStatus col-auto badge badge-primary ml-1">0</div>
+                                            <div class="PlayerStatusNet col-auto badge badge-info ml-1"></div>
+                                            <div class="DealerStatus col-auto badge badge-danger ml-1">D</div>
+                                        </div>
+                                        <div id="Player3" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                            <i class="fas fa-user text-danger"></i>
+                                            <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                        </div>
+                                        <div class="PlayerDeck">
+                                            <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                            <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                        </div>
+                                        <span class="PlayerAction badge badge-primary mx-auto">..</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4 seat">
+                                <div class="Player4 Player text-center" data-Sno="" data-sliderIndex="1">
+                                    <div class="d-inline-block">
+                                        <div class="row m-0 p-1">
+                                            <div class="PlayerName col badge badge-danger">Player 6</div>
+                                            <div class="PlayerStatus col-auto badge badge-primary ml-1">0</div>
+                                            <div class="PlayerStatusNet col-auto badge badge-info ml-1"></div>
+                                            <div class="DealerStatus col-auto badge badge-danger ml-1">D</div>
+                                        </div>
+                                        <div id="Player4" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                            <i class="fas fa-user text-warning"></i>
+                                            <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                        </div>
+                                        <div class="PlayerDeck">
+                                            <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                            <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                        </div>
+                                        <span class="PlayerAction badge badge-primary mx-auto">..</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4 seat">
+                                <div class="Player5 Player" data-Sno="" data-sliderIndex="2">
+                                    <div class="d-inline-block">
+                                        <div class="row m-0 p-1">
+                                            <div class="PlayerName col badge badge-danger">Player 6</div>
+                                            <div class="PlayerStatus col-auto badge badge-primary ml-1">0</div>
+                                            <div class="PlayerStatusNet col-auto badge badge-info ml-1"></div>
+                                            <div class="DealerStatus col-auto badge badge-danger ml-1">D</div>
+                                        </div>
+                                        <div id="Player5" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                            <i class="fas fa-user text-info"></i>
+                                            <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                        </div>
+                                        <div class="PlayerDeck">
+                                            <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                            <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                        </div>
+                                        <span class="PlayerAction badge badge-primary mx-auto">..</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-4 seat">
+                                <div class="Player2 Player" data-sno="" data-sliderIndex="4">
+                                    <div class="d-inline-block">
+                                        <div class="row m-0 p-1">
+                                            <div class="PlayerName col badge badge-danger">Player 6</div>
+                                            <div class="PlayerStatus col-auto badge badge-primary ml-1">0</div>
+                                            <div class="PlayerStatusNet col-auto badge badge-info ml-1"></div>
+                                            <div class="DealerStatus col-auto badge badge-danger ml-1">D</div>
+                                        </div>
+                                        <div id="Player2" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                            <i class="fas fa-user"></i>
+                                            <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                        </div>
+                                        <div class="PlayerDeck  mb-2">
+                                            <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                            <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                        </div>
+                                        <span class="PlayerAction badge badge-primary mx-auto">..</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4" id="potdiv" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                <div class="bg-white text-center">
+                                    <div class="bg-secondary text-primary text-center mb-0 p-0" id="status">
+                                        The bet is 2 to Tom
+                                    </div>
+                                </div>
+                                <div class="text-center mx-auto p-3">
+
+                                    <div class="PlayerNameX badge badge-warning mt-1">Pot</div>
+
+                                    <span class="PlayerStatus badge badge-warning mx-auto">0</span>
+                                    <div class="PlayerX mt-3 row">
+
+                                        <img src="#" class="CommunityCard">
+                                        <img src="#" class="CommunityCard">
+                                        <img src="#" class="CommunityCard">
+                                        <img src="/Cards/C10.png" class="CommunityCard">
+                                        <img src="Cards/DA.png" class="CommunityCard">
+
+                                    </div>
+                                    <div id="CommunityCardClickPopUp">
+                                        <div class="imgSelectedCard"><img src="#" id="SelectedCommunityCard" style="width:50px;height:100px;" /></div>
+
+                                        <label>Actions</label>
+                                        <div class="TakeCommunityCard">
+                                            <button class="btn-sm btn-primary" onclick="TakeCommunityCard('1');">Take</button>
+                                            <button class="btn-sm btn-primary" onclick="TakeCommunityCard('2');">Show</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4 seat">
+                                <div class="Player6 Player" data-sno="" data-sliderIndex="3">
+                                    <div class="d-inline-block">
+                                        <div class="row m-0 p-1">
+                                            <div class="PlayerName col badge badge-danger">Player 6</div>
+                                            <div class="PlayerStatus col-auto badge badge-primary ml-1">0</div>
+                                            <div class="PlayerStatusNet col-auto badge badge-info ml-1"></div>
+                                            <div class="DealerStatus col-auto badge badge-danger ml-1">D</div>
+                                        </div>
+                                        <div id="Player6" ondrop="Drop(event);" ondragover="allowDrop(event)" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                            <i class="fas fa-user text-primary"></i>
+                                            <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                        </div>
+                                        <div class="PlayerDeck">
+                                            <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                            <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                        </div>
+                                        <span class="PlayerAction badge badge-primary mx-auto">..</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row text-center mt-2 mb-2">
+                            <div class="text-center mx-auto col-12 col-sm-8 col-lg-6 text-center card p-2 bg-white" id="self">
+                                <div class="item show">
+                                    <div>
+                                        <div class="PlayerView PlayerActive Player1 Player" data-sno="">
+                                            <div class="d-inline-block" ondrop="DropSelf(event);" ondragover="allowDrop(event)" ondragenter="dragEnter(event);" ondragend="dragEnd(event)" ondragleave="dragEnd(event)">
+                                                <span class="PlayerStatus badge badge-info p-2">0</span>
+                                                <span class="PlayerStatusNet badge badge-success ml-2"></span>
+                                                <span class="PlayerName p-2">Player 6</span>
+                                                <div>
+                                                    <span class="ActiveStatus col-auto badge badge-danger ml-1 d-none">A</span>
+                                                    <span class="DealerStatus text-danger font-weight-bold">Dealer</span>
+                                                </div>
+                                                <div class="PlayerDeck">
+                                                    <img src="Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                                    <img src="/Cards/backside.png" class="PlayerCard" data-cardvalue="">
+                                                </div>
+                                                <br />
+                                                <span class="PlayerAction badge badge-primary mx-auto">..</span>
+
+                                                <div class="col-12 modal col-sm-8  col-md-6 CardActions h-50 mx-auto">
+                                                    <div>
+                                                        <div class="PassPlayers bg-white mb-2 mt-2 pt-2 pb-2">
+                                                            <label class="text-white">To Community</label>
+                                                            <div class="row">
+                                                                <button class="btn-sm btn-primary" onclick="PassCard(1);" style="margin:11%;">wahaj</button>
+                                                                <button class="btn-sm btn-primary" onclick="PassCard(2);" style="margin:11%;">steph</button>
+                                                                <button class="btn-sm btn-primary" onclick="PassCard(3);" style="margin:11%;">conor</button>
+                                                                <button class="btn-sm btn-primary" onclick="PassCard(4);" style="margin:11%;">mcmahn</button>
+                                                            </div>
+                                                        </div>
+                                                        <div class="bg-white my-auto p-1 d-flex justify-content-around">
+                                                            <button class="btn-sm btn-info Discard" style="border:none;margin-top: 3%;" data-playersno="X">Discard</button>
+                                                            <button class="btn-sm btn-warning Show" style="border:none;margin-top: 3%;" data-playersno="X">Show</button>
+                                                        </div>
+                                                        <div class="bg-white mt-2 p-1">
+                                                            <button class="btn-sm btn-danger mr-1 ml-1" onclick="PassCard(this);" style="border:none;" data-playersno="-1">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <button class="btn btn-sm btn-primary PassCard" data-toggle="tooltip" data-html="true" title="..." style="display:none;margin-left:40%;">Pass Card</button>
+                                    <!--<button class="btn-sm btn-info Discard" style="border:none;margin-top: 3%;" data-playersno="X">Discard</button>
+                                    <button class="btn-sm btn-warning Show" style="border:none;margin-top: 3%;" data-playersno="X">Show</button>-->
+
+                                </div>
+                                <div class="row PlayerActions justify-content-around bg-white p-0 m-0">
+
+                                    <input type="text" id="BetTakeValue" class="ml-1" onclick="$(this).val('');">
+
+
+                                    <button class="btn-sm btn-success Bet mt-1">&nbsp;Bet&nbsp;</button>
+                                    <button class="btn-sm btn-primary Pass ml-1 mt-1">Check</button>
+
+                                    <button class="btn-sm btn-success Call ml-1 mt-1">Call</button>
+
+
+                                    <button class="btn-sm btn-warning Fold ml-1 mt-1">Fold</button>
+
+                                    <button class="btn-sm btn-info ShowAll ml-1 mt-1 mr-1">Show</button>
+
+
+                                    <button class="btn-sm btn-primary Take ml-1 mt-1 mr-1">Take</button>
+
+                                    <button class="btn-sm btn-danger AddToPot ml-1 mt-1 mr-1">Add to pot</button>
+
+                                    <button class="btn-sm btn-danger Discard ml-1 mt-1 mr-1" data-playersno="X">Discard</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center">
+                        <div id="pop-up" style="display:inline-grid;">
+                            <div>
+                                <div style="display: inline-grid;" class="PassPlayers">
+                                    <label>To Community</label>
+                                    <button class="btn-sm btn-primary" onclick="PassCard(1);" style="margin:11%;">wahaj</button>
+                                    <button class="btn-sm btn-primary" onclick="PassCard(2);" style="margin:11%;">steph</button>
+                                    <button class="btn-sm btn-primary" onclick="PassCard(3);" style="margin:11%;">conor</button>
+                                    <button class="btn-sm btn-primary" onclick="PassCard(4);" style="margin:11%;">mcmahn</button>
+                                </div>
+                                <hr />
+                                <div style="display:inline-grid">
+                                    <button class="btn-sm btn-info Discard" style="border:none;margin-top: 3%;" data-playersno="X">Discard</button>
+                                    <button class="btn-sm btn-warning Show" style="border:none;margin-top: 3%;" data-playersno="X">Show</button>
+                                </div>
+                                <hr />
+                                <button class="btn-sm btn-danger" onclick="PassCard(this);" style="margin-left: 10%;margin-right:10%;border:none;margin-top:3%;" data-playersno="-1">Close</button>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="row">
+                        <div class="text-center mx-auto col-12 text-center card bg-secondary align-self-center">
+                            <div class="PlayerDealer m-1 pt-2">
+
+
+                                <div class="row align-items-center border-primary border-bottom mb-1 justify-content-between h-75">
+                                    <div class="col-auto text-center p-0 mr-3 h-100">
+                                        <input id="txtAnte" class="mt-0">
+                                        <button class="btn btn-sm btn-primary Ante mt-0">Ante</button>
+                                    </div>
+
+                                    <div class="col-auto p-0 text-left h-100">
+                                        <span>Deal</span>
+                                        <input id="DealValue" class="p-0">
+                                        <span>Cards</span>
+                                    </div>
+                                    <div class="col-2 p-0 m-3 text-left h-100">
+                                        <div>
+                                            <input type="radio" class="form-control w-25 d-inline" id="faceup" value="public" name="CardDealType"><label for="faceup" class="w-50 btn btn-sm btn-primary">up</label>
+                                        </div>
+                                        <div class="d-inline-block; mt-3">
+                                            <input type="radio" class="form-control w-25 d-inline" id="facedown" value="private" name="CardDealType"><label for="facedown" class="w-50 btn btn-sm btn-primary">down</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto p-2 h-100">
+                                        to
+                                    </div>
+
+
+                                    <div class="col-auto pr-0 text-left h-100">
+                                        <div class="CardDealPlayer" style="display:inline-grid;font-size:12px;cursor:pointer;">
+                                            <label onClick="Deal(-1)" value="-1"> All </label>
+                                        </div>
+                                        <div id="DealToCommunityPopUp" style="display:inline-grid;">
+                                            <label>Choose Community Position</label>
+                                            <div class="PassCommunity">
+                                                <button class="btn-sm btn-primary" onclick="PassCard(1);" style="margin:11%;">wahaj</button>
+                                                <button class="btn-sm btn-primary" onclick="PassCard(2);" style="margin:11%;">steph</button>
+                                                <button class="btn-sm btn-primary" onclick="PassCard(3);" style="margin:11%;">conor</button>
+                                                <button class="btn-sm btn-primary" onclick="PassCard(4);" style="margin:11%;">mcmahn</button>
+                                                <hr />
+                                                <button class="btn-sm btn-primary" onclick="PassCard(-1);" style="background: green;">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row m1-1">
+                                    <div class="col-12 text-center">
+                                        <button class="btn btn-sm btn-primary PassDeal m2" data-toggle="tooltip" data-html="true" title="click to view options">Pass Deal</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <button class="btn btn-danger BtnCancelHand m-2">Cancel Hand</button>
+                            <button class="btn btn-danger BtnSettle m-2">End hand</button>
+                            <button class="btn btn-outline-danger BtnLeave m-2">Leave Game</button>
+                            <button class="btn btn-danger BackToMenu m-2">Game Over</button>
+                            <button class="btn btn-primary BtnSitOut">Sit Out</button>
+                            <button class="btn btn-primary BtnRejoin" style="display:none;">Rejoin</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-none col-2 d-sm-block bg-black align-content-around">
+                <div class="mb-1"><img class="img-fluid" src="images/images.png" /></div>
+                <div class="mb-1"><img class="img-fluid" src="images/250x250Placeholder.png" /></div>
+                <div class="mb-1"><img class="img-fluid" src="images/images.png" /></div>
+                <div class="mb-1"><img class="img-fluid" src="images/250x250Placeholder.png" /></div>
+            </div>
+
+        </div>
+    </div>
+
+
+</body>
+</html>
+
+
+<script>
+
+    var DragSrc;
+    var DropSrc;
+    var FromElement;
+    var ToElement;
+
+
+    function allowDrop(ev) {
+
+        $('.fas').addClass('Droppable');
+
+        ev.preventDefault();
+        console.log("allowDrop 693");
+        console.log(ev.srcElement);
+        console.log("allowDrop 695");
+        console.log(ev.target);
+        //if ($(ev.target).hasClass("col-4") == true)
+        //    $(ev.target).addClass('DropToStyle');
+
+    }
+
+     function allowDropCommunity(ev) {
+
+        ev.preventDefault();
+        console.log("allowDrop 693");
+        console.log(ev.srcElement);
+        console.log("allowDrop 695");
+        console.log(ev.target);
+        //if ($(ev.target).hasClass("col-4") == true)
+        //    $(ev.target).addClass('DropToStyle');
+
+    }
+
+
+    function drag(ev) {
+        ////debugger;
+        console.log("drag 704");
+        DragSrc = ev.srcElement;
+        console.log("drag 706");
+        $(DragSrc).addClass("Selected");
+        ev.dataTransfer.setData("cardvalue", "");
+        console.log(DragSrc);
+    }
+
+
+    
+    function dragCommunity(ev) {
+        ////debugger;
+        console.log("drag 704");
+        DragSrc = ev.srcElement;
+        console.log("drag 706");
+        $(DragSrc).addClass("Selected");
+        ev.dataTransfer.setData("cardvalue", "");
+        console.log(DragSrc);
+    }
+
+
+
+
+    function dragEnd(ev) {
+
+        // //debugger;
+        $(ev.srcElement).removeClass("Droppable");
+        console.log("dragEnd 716");
+        ev.preventDefault();
+        console.log(ev.srcElement);
+
+
+
+    }
+
+     function dragEndCommunity(ev) {
+
+        // //debugger;
+        console.log("dragEnd 716");
+        ev.preventDefault();
+        console.log(ev.srcElement);
+
+
+
+    }
+
+
+    function dragEnter(ev) {
+        ev.preventDefault();
+        //$(ev.target).removeClass('DropToStyle');
+
+    }
+
+     function dragEnterCommunity(ev) {
+        ev.preventDefault();
+        //$(ev.target).removeClass('DropToStyle');
+
+    }
+
+
+
+    function Drop(ev) {
+
+        try {
+            $('.fas').removeClass('Droppable');
+
+            //debugger;
+            DropSrc = ev.srcElement;
+            console.log("Drop 738 " + DropSrc);
+            var cardValue = $(DragSrc).data('cardvalue')
+            //alert($(DragSrc).data('cardvalue'));
+            ev.preventDefault();
+            FromElement = $(DragSrc).closest('.Player').data('sno');
+            ToElement = $(DropSrc).closest('.Player').data('sno');
+            console.log("Drop 744 " + DropSrc);
+            console.log(DropSrc);
+
+            // for now opening modal for community
+
+        }
+        catch (ex) {
+            alert('drop at the right place!');
+        }
+        if ($(DropSrc).hasClass("fas fa-user") && FromElement != undefined && ToElement != undefined && FromElement != ToElement) {
+            PassCardToPlayerByDrop(ToElement, cardValue);
+            UpdateGameHash(GameHash.GameId);
+        }
+        DragSrc = undefined;
+        DropSrc = undefined;
+
+
+        //ev.target.appendChild(document.getElementById(data));
+    }
+
+    
+    function DropSelf(ev) {
+
+        try {
+            //debugger;
+            DropSrc = ev.srcElement;
+            console.log("Drop 738 " + DropSrc);
+            var cardValue = $(DragSrc).data('cardvalue')
+            //alert($(DragSrc).data('cardvalue'));
+            ev.preventDefault();
+            FromElement = $(DragSrc).closest('.Player').data('sno');
+            ToElement = $(DropSrc).closest('.Player').data('sno');
+            console.log("Drop 744 " + DropSrc);
+            console.log(DropSrc);
+
+            // for now opening modal for community
+
+        }
+        catch (ex) {
+            alert('drop at the right place!');
+        }
+        if (FromElement != undefined && ToElement != undefined && FromElement != ToElement) {
+            PassCardToPlayerByDrop(ToElement, cardValue);
+            UpdateGameHash(GameHash.GameId);
+        }
+        DragSrc = undefined;
+        DropSrc = undefined;
+
+
+        //ev.target.appendChild(document.getElementById(data));
+    }
+
+
+
+
+    
+    function dropToCommunity(ev) {
+
+        try {
+            //debugger;
+            DropSrc = ev.srcElement;
+            console.log("Drop 738 " + DropSrc);
+            var cardValue = $(DragSrc).data('cardvalue')
+            //alert($(DragSrc).data('cardvalue'));
+            ev.preventDefault();
+            FromElement = $(DragSrc).closest('.Player').data('sno');
+            ToElement = $(DropSrc).attr("class");
+            console.log("Drop 744 " + DropSrc);
+            console.log(FromElement)
+            console.log(ToElement);
+            console.log(DragSrc);
+            console.log(DropSrc);
+
+            // for now opening modal for community
+
+        }
+        catch (ex) {
+            alert('drop at the right place!');
+        }
+        if (FromElement != undefined && ToElement == "CommunityCardDrop") {
+            PassCardToCommunityDrop($(DropSrc).data('communityindex'), cardValue);
+            UpdateGameHash(GameHash.GameId);
+        }
+        DragSrc = undefined;
+        DropSrc = undefined;
+        FromElement = undefined;
+        ToElement = undefined;
+
+
+        //ev.target.appendChild(document.getElementById(data));
+    }
+
+
+
+
+    
+
+
+
+
+
+
+
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip().off('focusout');
+    })
+
+
+
+</script>
