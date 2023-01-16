@@ -27,7 +27,7 @@ namespace PersonalizedCardGame
 
             try
             {
-                using (var context = new DBCardGameContext())
+                /*using (var context = new DBCardGameContext())
                 {
 
                     var l = request.UserIdentityFromCookie.Length;
@@ -44,7 +44,7 @@ namespace PersonalizedCardGame
                         IsActive = true
                     });
                     context.SaveChanges();
-                }
+                }*/
 
                 return true;
 

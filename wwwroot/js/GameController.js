@@ -24,8 +24,7 @@ function SendNotification(gamecode, playerid, notificationmessage) {
     event.preventDefault();
 }
 
-
-
+//Invoke SendEndGameSummary
 function SendEndGameSummary(gamecode) {
 
     try {
@@ -35,7 +34,6 @@ function SendEndGameSummary(gamecode) {
         event.preventDefault();
     }
     catch (err) {
-
         ExceptionLogging(err.stack.toString());
     }
 

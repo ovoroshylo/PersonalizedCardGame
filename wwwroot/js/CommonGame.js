@@ -50,7 +50,7 @@ const PokerHandRanks = [
 
 var Deck = [];
 
-
+//make new deck
 function GetNewDeck() {
 
     Deck = [];
@@ -67,29 +67,24 @@ function GetNewDeck() {
 
     }
 
-    return Deck; /// new deck;
+    return Deck;
 
 }
 
-
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1));
-}
-
+//shuffle the deck(common card game shuffling)
 function shuffleDeck(deck) {
 
     for (var i = 0; i < deck.length; i++) {
         var rndNo = getRandomInt(0, deck.length-1);
         var random1 = getRandomInt(0, deck.length-1);
-        if (deck[random1] != null && deck[rndNo] != null) {
+        if (deck[random1] !== null && deck[rndNo] !== null) {
             var card = deck[random1];
             deck[random1] = deck[rndNo];
             deck[rndNo] = card;
         }
     }
 
-
-   return deck.filter(x => x != null && x != undefined);
+   return deck.filter(x => x !== null && x !== undefined);
 }
 
 
@@ -204,32 +199,9 @@ function PokerHand(hand) {
     return whichHand();
 }
 
-// const hands = ['Royal flush', 'Straight flush', 'Four of a kind', 'Full house',
-//     'Flush', 'Straight', 'Three of a kind', 'Two pairs', 'Pair', 'High card']
-//     //compare ranks of hands and return results
-
-
-
-
-
-
-
-
-//function Deal(PlayerSno) {
-//    debugger;
-//    NumOfCard = $('#DealValue').val();
-
-//    // all except Community 
-//    if (PlayerSno == -1) {
-//        for (var i = 0; i < NumOfCard; i++) {
-//            for (var j = 0; j < NumberOfPlayer; j++) {
-
-//                $('.Player' + j + 1).append('<img src="/Cards/backside.png" class="rotate CommunityCardAnimated">');
-//                setInterval(function () {
-//                    $('.Player' + j + 1).find('.CommunityCardAnimated').remove();
-//                }, 2000);
-//            }
-//        }
-//    }
-
-//}
+/*
+ * Get Random value between min and max
+*/
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1));
+}
