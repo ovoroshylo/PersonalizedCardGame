@@ -25,6 +25,9 @@ namespace PersonalizedCardGame.Hubs
             _dbCardGameContext = dbCardGameContext;
         }
 
+        /*
+            Send "ReceiveMessage" to all clients.
+        */
         public int SendMessage(string user, string message)
         {
             try
@@ -52,6 +55,13 @@ namespace PersonalizedCardGame.Hubs
             }
         }
 
+        /*
+        Send "ReciveNotification" to all Clients.
+        @param
+        gamecode: GameCode that will receive notfication.
+        playerid: PlayerId that send notficiation.
+        notificationmessage: message
+        */
         public async Task SendNotification(string gamecode, string playerid, string notificationmessage)
         {
             var val1 = Context.ConnectionId;
@@ -68,6 +78,11 @@ namespace PersonalizedCardGame.Hubs
 
         }
 
+        /*
+        Send "ReceiveEndGameSummary"
+        @param
+        gamecode: GameCode that send notification
+        */
         public async Task SendEndGameSummary(string gamecode)
         {
             var val1 = Context.ConnectionId;
@@ -79,6 +94,11 @@ namespace PersonalizedCardGame.Hubs
             await Clients.All.SendAsync("ReceiveEndGameSummary", gamecode);
         }
 
+        /*
+        Send "ReceiveEndHandSummary"
+        @param
+        gamecode: GameCode that send notification
+        */
         public async Task SendEndHandSummary(string gamecode)
         {
             var val1 = Context.ConnectionId;
@@ -90,6 +110,7 @@ namespace PersonalizedCardGame.Hubs
             await Clients.All.SendAsync("ReceiveEndHandSummary", gamecode);
         }
 
+        //same as SendMessage
         public async Task SendMessage2(string user, string message, string test)
         {
             var val1 = Context.ConnectionId;
@@ -104,9 +125,7 @@ namespace PersonalizedCardGame.Hubs
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
 
-
-
-
+        //same as SendMessage    
         public async Task ReceiveOnLoad(string user, string message)
         {
             var val1 = Context.ConnectionId;
@@ -117,23 +136,22 @@ namespace PersonalizedCardGame.Hubs
             JavaScriptSerializer js = new JavaScriptSerializer();
             string jsonData = js.Serialize(ConnectionIds); // {"Name":"C-
 
-
-
             await Clients.All.SendAsync("ReceiveMessage", user, jsonData);
         }
 
-
+        // when you connect to GameClass Hub, this function invoked.
         public override Task OnConnectedAsync()
         {
 
-            //var x = Clients.Caller
-
             HttpContext httpContext = Context.GetHttpContext();
 
+            //Get PlayerUniqueId of connecting user
             var customQuerystring = httpContext.Request.QueryString.Value.Split("&").FirstOrDefault().Split("=").LastOrDefault();
 
             if (customQuerystring != null)
             {
+                
+                //If player already added to Database, just change player's Modified time and isConnected = true, SignalRconnectionId as new connectionId.
                 var player = _dbCardGameContext.Player.Where(x => x.PlayerUniqueId == customQuerystring).FirstOrDefault();
                 if (player != null)
                 {
@@ -143,6 +161,8 @@ namespace PersonalizedCardGame.Hubs
                     player.IsConnected = true;
                     _dbCardGameContext.SaveChanges();
                 }
+
+                //If not exist, Add new player
                 else
                 {
                     _dbCardGameContext.Player.Add(new Player() { Created = DateTime.Now, IsConnected = true, LastActionTime = DateTime.Now, PlayerUniqueId = customQuerystring, SignalRconnectionId = Context.ConnectionId });
@@ -152,22 +172,20 @@ namespace PersonalizedCardGame.Hubs
             return base.OnConnectedAsync();
         }
 
+        //when you close connection, this function invokes.
         public override Task OnDisconnectedAsync(Exception exception)
         {
 
             try
             {
-
+                //Get disconnectedplayer
                 var disconnectedplayer = _dbCardGameContext.Player.Where(x => x.SignalRconnectionId == Context.ConnectionId).FirstOrDefault();
 
                 if (disconnectedplayer != null)
                 {
-
+                    //If disconnectedplayer currently join game and active, set him deactive.
                     if (disconnectedplayer.CurrentGameCode != "" && disconnectedplayer.CurrentGameCode != null)
                     {
-
-
-
                         disconnectedplayer.IsConnected = false;
                         disconnectedplayer.IsActive = false;
                         disconnectedplayer.IsCurrent = false;
@@ -180,22 +198,15 @@ namespace PersonalizedCardGame.Hubs
                         var allrelatedplayers = _dbCardGameContext.Player.Where(x => x.CurrentGameCode == disconnectedplayer.CurrentGameCode).ToList();
                         foreach (var ar in allrelatedplayers)
                         {
+                            //Send "OtherPlayerDisconnected" msg.
                             Clients.Client(ar.SignalRconnectionId).SendAsync("OtherPlayerDisconnected", Context.ConnectionId, disconnectedplayer.UserName);
-
                         }
-
-
                     }
                 }
             }
             catch (Exception ex)
             {
-
-
-
             }
-
-
 
             Task tsk = new Task(() =>
             {
@@ -203,8 +214,6 @@ namespace PersonalizedCardGame.Hubs
             });
 
             return tsk;
-            //return base.OnDisconnectedAsync();
-
         }
     }
 }

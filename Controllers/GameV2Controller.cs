@@ -55,6 +55,16 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
+        /*
+        CreateGame
+        @param
+        UserId: UserId that create game.
+        GameCode: Generated GameCode of the new game.
+        GameHash: Intialized GameHash of the new game.
+        ConnectionId: SignalR connectionId of the game.
+        PlayerUniqueId: PlayerUniqueId (UseName + pk2 + ConnectionId)
+        GamePlayerHash: Hash of the players(only creater when you create game)
+        */
         [HttpPost]
         public IActionResult _CreateGame([FromBody] CreateGame model)
         {
@@ -68,19 +78,23 @@ namespace PersonalizedCardGame.Controllers
                 _CardGameContext.GameHashTemp.RemoveRange(deps);
                 _CardGameContext.SaveChanges();
 
+                // if game with the same GameCode doesn't exit
                 if (gameresp == null)
                 {
                     resp.Message = "Success";
                     resp.ResponseCode = "100";
 
-                    //for unittesting 
                     JavaScriptSerializer js = new JavaScriptSerializer();
                     var gameplayerhash = js.Deserialize<ActivePlayer>(model.GamePlayerHash);
-
+                    
+                    //Add new GameHashTemp
                     _CardGameContext.GameHashTemp.Add(new GameHashTemp() { Created = DateTime.Now, GameCode = model.GameCode, GameHash = model.GameHash, IsActive = true, GamePlayerHash = model.GamePlayerHash });
 
+                    /*
+                    Add New Player
+                    Set creater as dealer and active and current.
+                    */
                     var currentplayer = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
-
                     currentplayer.CurrentGameCode = model.GameCode;
                     currentplayer.IsConnected = true;
                     currentplayer.IsDealer = true;
@@ -92,6 +106,8 @@ namespace PersonalizedCardGame.Controllers
 
                     return Ok(resp);
                 }
+
+                // if game with the same GameCode exist already.
                 else
                 {
                     resp.Message = "Game Already exist. Please try with new code";
@@ -110,6 +126,16 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
+        /*
+        Join
+        @param
+        UserId: UserId that create game.
+        GameCode: Generated GameCode of the new game.
+        GameHash: Intialized GameHash of the new game.
+        ConnectionId: SignalR connectionId of the game.
+        PlayerUniqueId: PlayerUniqueId (UseName + pk2 + ConnectionId)
+        GamePlayerHash: Hash of the players
+        */
         [HttpPost]
         public IActionResult _JoinGame([FromBody] CreateGame model)
         {
@@ -117,9 +143,13 @@ namespace PersonalizedCardGame.Controllers
             {
                 var resp = new CommonResponse();
                 var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode && x.IsActive == true).FirstOrDefault();
+                // if Game with same GameCode is active
                 if (gameresp != null)
                 {
+                    //Update GamePlayerHash to the model's GamePlayerHash value.
                     gameresp.GamePlayerHash = model.GamePlayerHash;
+
+                    //Change player's status(Set player as active and connected, also change player's current GameCode)
                     var currentplayer = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault();
                     currentplayer!.CurrentGameCode = model.GameCode;
                     currentplayer!.IsConnected = true;
@@ -129,6 +159,8 @@ namespace PersonalizedCardGame.Controllers
                     _CardGameContext.SaveChanges();
                     return Ok(gameresp);
                 }
+
+                //otherwise
                 else
                 {
                     return Ok(null);
@@ -144,7 +176,11 @@ namespace PersonalizedCardGame.Controllers
         }
 
         /*
-            Add PlayerAction ("SitOut" or "Rejoin")
+        Add PlayerAction ("SitOut" or "Rejoin")
+        @param
+        PlayerUniqueId: UniqueId of the action taker.
+        GameCode: GameCode of the Game player take action in.
+        ActionCode: "SitOut" or "Rejoin"
         */
         [HttpPost]
         public IActionResult _PlayerAction([FromBody] PlayerGenericActionRequest model)
@@ -205,6 +241,9 @@ namespace PersonalizedCardGame.Controllers
         }
 
 
+        /*
+            Get Game Players and return them. 
+        */
         [HttpPost]
         public IActionResult _GetGamePlayers([FromBody] PlayerGenericActionRequest model)
         {
@@ -228,6 +267,9 @@ namespace PersonalizedCardGame.Controllers
             }
         }
 
+        /*
+            Get GameHash by GameCode    
+        */
         [HttpPost]
         public IActionResult _GetGameHash([FromBody] string GameCode)
         {
@@ -264,24 +306,39 @@ namespace PersonalizedCardGame.Controllers
             }
         }
 
+        /*
+        Update GameHash
+        @param
+        GameCode: GameCode of the GameHash to Update
+        PlayerUniqueId: PlayerId of the action taker.
+        GameHash: GameHash to update.
+        ActionMessage: ActionMessage of updaing GameHash
+        */
         [HttpPost]
         public IActionResult _UpdateGameHash([FromBody] UpdateHashRequest model)
         {
             var resp = new CommonResponse();
 
+            //Get Prev GameHash and players
             var PrevHash = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
             var players = _CardGameContext.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
 
+            //start transaction
             using (var transaction = _CardGameContext.Database.BeginTransaction())
             {
                 try
                 {
+                    //get GameHash by GameCode
                     var gameresp = _CardGameContext.GameHashTemp.Where(x => x.GameCode == model.GameCode).FirstOrDefault();
+                    
+                    // if gameresp exist.
                     if (gameresp != null)
                     {
                         gameresp.GameHash = model.GameHash;
                         gameresp.Modified = DateTime.Now;
                         var userid = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault().Id;
+                        
+                        //Add GameLog
                         _CardGameContext.GameLog.Add(new GameLog() { Created = DateTime.Now, GameId = gameresp.Id, PlayerId = userid, Action = model.ActionMessage });
                         int updated = _CardGameContext.SaveChanges();
 
@@ -289,6 +346,7 @@ namespace PersonalizedCardGame.Controllers
 
                         if (updated == 2)
                         {
+                            //send ReceiveHashV1 Message to all of members.
                             foreach (var p in players)
                             {
                                 _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", "100");
@@ -311,6 +369,7 @@ namespace PersonalizedCardGame.Controllers
 
                     transaction.Rollback();
 
+                    //Send previous Hash(not updated Hash) to all players.
                     foreach (var p in players)
                     {
                         _HubContext.Clients.Client(p.SignalRconnectionId).SendAsync("ReceiveHashV1", PrevHash.GameHash, "100");
@@ -326,12 +385,18 @@ namespace PersonalizedCardGame.Controllers
         }
 
 
+        /*
+        Send ReceiveCancelHandNotification msg.
+        @param
+        NotificationType: type of Notification("100", "101")
+        GameCode: GameCode that send notification.
+        NotificationMessage: Notification Msg
+        */
         [HttpPost]
         public IActionResult _SendCancelHandNotification([FromBody] SendNotificationRequest model)
         {
             try
             {
-
                 var players = _CardGameContext.Player.Where(x => x.IsActive == true && x.CurrentGameCode == model.GameCode).ToList();
                 int updated = _CardGameContext.SaveChanges();
 
@@ -405,7 +470,9 @@ namespace PersonalizedCardGame.Controllers
 
         }
 
-        // after creating uniqueid and updating connection id 
+        /*
+            Update User Identity after creating uniqueid and updating connection id
+        */
         [HttpPost]
         public IActionResult _UpdateUserIdentity([FromBody] string request)
         {

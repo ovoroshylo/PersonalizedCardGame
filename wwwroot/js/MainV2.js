@@ -35,10 +35,23 @@ var UserIdentity = {
 
 // region game props - specific thread
 var GameHash = {
+    /**
+     * [{PlayerSno:2, Action: 'Bet 2' }]
+     * PlayerSno: Sno of the player
+     * Action: Last Action message of the specific player
+    */
     LastActionPerformed: [], // [{PlayerSno:2, Action: 'Bet 2' }]
     GameHand: 1,
-    Transaction: [], // [{GameHand:1, TransactionList: []}];
+    /*
+     * transaction list for end game summary table
+    */
+    Transaction: [], 
     FinalTransaction: [],
+    /**
+     * Player's final status of betting amount.
+     * PlayerId: player's unique id.
+     * Status: betting amount.
+    */
     PlayerNetStatus: [], // [{PlayerId:s1pk213i29031, Status:-12},{PlayerId:s2pk213i29031, Status:12}]
     BetStatus: "New hand. No bet yet.",
     BetStatusSno: 0,
@@ -46,6 +59,7 @@ var GameHash = {
     CurrentBet: 0, // for new req of call
     GameId: "1",
     Deck: GetNewDeck(), /// brandnew deck from common
+    //Active Player List
     ActivePlayers: [{
         PlayerId: "1", // combined username+ConnectionId
         PlayerName: "P1",
@@ -121,6 +135,7 @@ var GameHash = {
         CurrentRoundStatus: 0
     }
     ],
+    //Steps of game.
     Steps: [{
         RoundId: 1,
         Step: {
@@ -155,7 +170,9 @@ var GameHash = {
     PrevSno: 2,
     PotSize: 0,
     ModifiedDate: new Date(),
+    //Current Round Number.
     Round: 1,
+    //Cards of community
     CommunityCards: [{
         Value: "4H",
         Presentation: "public"

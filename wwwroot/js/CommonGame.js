@@ -1,10 +1,4 @@
-﻿//const handTwo = ('4S 5S 8C AS AD');
-
-
-// let rankArrayTwo = [];
-// let suitArrayTwo = [];
-
-const suits = ["C", "D", "H", "S"];
+﻿const suits = ["C", "D", "H", "S"];
 const ranks = [
     "2",
     "3",
@@ -20,8 +14,6 @@ const ranks = [
     "K",
     "A"
 ];
-
-
 
 const PokerHandRanks = [
 
@@ -87,8 +79,6 @@ function shuffleDeck(deck) {
    return deck.filter(x => x !== null && x !== undefined);
 }
 
-
-
 function PokerHand(hand) {
     //get ranks of hands
     const handOne = hand;   // "AC 4S 5S 8C AH";
@@ -96,7 +86,6 @@ function PokerHand(hand) {
     let rankArray = [];
     let suitArray = [];
     let arrayHandOne = handOne.split(" ");
-    //let arrayHandTwo = handTwo.split(" ");
 
     function sorted() {
         let sortedHand = [];
@@ -113,10 +102,9 @@ function PokerHand(hand) {
     console.log(sorted());
 
     let sortedHandOne = sorted(arrayHandOne);
-    //let sortedHandTwo = sortedHand(arrayHandTwo);
     console.log(sortedHandOne);
+
     function suitAndRank(sortedHandOne) {
-        console.log(sorted);
         for (let i = 0; i < sortedHandOne.length; i++) {
             let sted = sortedHandOne;
             rankArray.push(sted[i].charAt(0));
@@ -181,9 +169,9 @@ function PokerHand(hand) {
             console.log("Four of a Kind");
         } else if (Object.keys(rS).find(key => rS[key] === 3) && pairs() === 1) {
             console.log("Full House");
-        } else if (isFlush() /*First issue*/ === true) {
+        } else if (isFlush() === true) {
             console.log("Flush");
-        } else if (isStraight() /*Second issue*/ === "STRAIGHT") {
+        } else if (isStraight() === "STRAIGHT") {
             console.log("Straight");
         } else if (Object.keys(rS).find(key => rS[key] === 3)) {
             console.log("Three of a Kind");
