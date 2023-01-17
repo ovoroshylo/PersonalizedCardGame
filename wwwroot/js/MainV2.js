@@ -278,7 +278,7 @@ $(document).on('click', '.Ante', function () {
     // Ante action only available when there is at least one active players beside dealer that not folded
     if (FilterActivePlayer(x => x.IsFolded === 'N' && x.IsDealer === 'N').length > 0) {
 
-        const anteValue = $('#txtAnte').val()
+        const anteValue = parseFloat($('#txtAnte').val())
 
         AddStepAndSetLastActionPerformed(Sno, {
             Action: 'Ante: ' + anteValue,
@@ -316,7 +316,7 @@ $(document).on('click', '.PassDeal', function () {
     // initialize tooltip
     $('.tooltip-inner').html('')
 
-    const unfoldedActivePlayers = GameHash.ActivePlayers.filter(x => x.IsFolded === 'N' && x.Sno !== Sno)
+    const unfoldedActivePlayers = FilterActivePlayer(x => x.IsFolded === 'N' && x.Sno !== Sno)
 
     // Add Player List to pass Deal (except you and not folded also)
     if (unfoldedActivePlayers.length > 0) {
@@ -387,7 +387,7 @@ $(document).on('click', '.Take', function () {
             Else, Take all of Game's Current PotSize.
         */
         const betTakeValule = $('#BetTakeValue').val()
-        const currentPlayer = GetActivePlayerBySno()
+        const currentPlayer = GetActivePlayerBySno(Sno)
         const takeamount = (betTakeValule === '' || betTakeValule === '0') ? GameHash.PotSize : parseFloat(betTakeValule)
 
         // check if takeamount is between 0 ~ GameHash.Potsize
@@ -991,7 +991,7 @@ $(document).on('click', '.CommunityCard', function () {
     const src1 = $($('.CommunityCard.Selected')[0]).attr('src')
     $('.imgSelectedCard').html('<img src="' + window.location.origin + '/' + src1 + '" id="SelectedCommunityCard" style="width:50px;height:100px;" />')
     $('.TakeCommunityCard').find('.ShowOption').show()
-    if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsDealer === 'Y') {
+    if (FilterActivePlayer(x => x.Sno === Sno)[0].IsDealer === 'Y') {
         if ($('.TakeCommunityCard').find('.TakeToCommunity').length === 0) { $('.TakeCommunityCard').append('<button class="btn-sm btn-danger TakeToCommunity" onclick="TakeCommunityCard(-2);">Move to deck</button >') }
     } else {
         $('.TakeCommunityCard').find('.TakeToCommunity').remove()
@@ -1221,13 +1221,13 @@ function UpdateGameHash(code, ActionMsg = 'Joined') {
 function UpdateView() {
     try {
         // OtherPlayers_Prev: Players that joined before current player
-        const OtherPlayers_Prev = GameHash.ActivePlayers.filter(x => x.Sno < Sno)
+        const OtherPlayers_Prev = FilterActivePlayer(x => x.Sno < Sno)
 
         // OtherPlayers_Next: Players that joined after current player
-        const OtherPlayers_Next = GameHash.ActivePlayers.filter(x => x.Sno > Sno)
+        const OtherPlayers_Next = FilterActivePlayer(x => x.Sno > Sno)
 
         // CurrentPlayer
-        const CurrentPlayer = GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0]
+        const CurrentPlayer = FilterActivePlayer(x => x.Sno === Sno)[0]
 
         // If you sit out, show "Rejoin" button instead.
         if (IsSitOut === true) {
@@ -1259,7 +1259,7 @@ function UpdateView() {
         $('#PassDealPopUp').hide()
         $('.PlayerName').html('Empty seat')
 
-        $.each(GameHash.ActivePlayers.filter(x => x.Sno !== Sno), function (i, obj) {
+        $.each(FilterActivePlayer(x => x.Sno !== Sno), function (i, obj) {
             if (i === 0) { $('.PassPlayers').append('<span class="text-dark">Player: </span>') }
 
             $('.PassPlayers').append('<button class="btn-sm btn-primary" onclick="PassCard(this);" style="border:none;margin-top:3%;margin-left:1%;" data-playersno="' + obj.Sno + '">' + obj.PlayerId.split('pk2')[0] + '</button>')
@@ -1352,7 +1352,7 @@ function UpdateView() {
         $('.CardDealPlayer').html('')
         $('.CardDealPlayer').append('<label style="text-decoration: underline;cursor:pointer;" onClick="Deal(this);" data-value="-1"> All </label>')
         $('.CardDealPlayer').append('<label style="text-decoration: underline;cursor:pointer;" onClick="Deal(this);" data-value="X"> Community </label>')
-        $.each(GameHash.ActivePlayers.filter(x => x.IsFolded === 'N'), function (i, obj) {
+        $.each(FilterActivePlayer(x => x.IsFolded === 'N'), function (i, obj) {
             $('.CardDealPlayer').append('<label style="text-decoration: underline;cursor:pointer;" onClick="Deal(this);" data-value="' + obj.Sno + '"> ' + obj.PlayerId.split('pk2')[0] + ' </label>')
         })
 
@@ -1394,13 +1394,13 @@ function UpdateView() {
 
         $('.Player').show()
 
-        if (GameHash.ActivePlayers.filter(x => x.IsDealer === 'Y').length > 0) { $('.Player[data-sno="' + GameHash.ActivePlayers.filter(x => x.IsDealer === 'Y')[0].Sno + '"]').find('.DealerStatus').show() }
+        if (FilterActivePlayer(x => x.IsDealer === 'Y').length > 0) { $('.Player[data-sno="' + FilterActivePlayer(x => x.IsDealer === 'Y')[0].Sno + '"]').find('.DealerStatus').show() }
 
-        if (GameHash.ActivePlayers.filter(x => x.IsCurrent === 'Y').length > 0) { $('.Player[data-sno="' + GameHash.ActivePlayers.filter(x => x.IsCurrent === 'Y')[0].Sno + '"]').find('.ActiveStatus').show() }
+        if (FilterActivePlayer(x => x.IsCurrent === 'Y').length > 0) { $('.Player[data-sno="' + FilterActivePlayer(x => x.IsCurrent === 'Y')[0].Sno + '"]').find('.ActiveStatus').show() }
 
         // folded player
 
-        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsCurrent === 'Y') {
+        if (FilterActivePlayer(x => x.Sno === Sno)[0].IsCurrent === 'Y') {
             $('.PlayerActions').show()
             $('.Bet').prop('disabled', false)
             $('.Call').prop('disabled', false)
@@ -1422,7 +1422,7 @@ function UpdateView() {
             // $('.PlayerDealer').hide();
         }
 
-        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsDealer === 'Y') {
+        if (FilterActivePlayer(x => x.Sno === Sno)[0].IsDealer === 'Y') {
             $('.PlayerDealer').show()
             // $('.Pass').hide();
             $('.PlayerActions').show()
@@ -1440,7 +1440,7 @@ function UpdateView() {
             $('.BtnCancelHand').prop('disabled', true)
         }
 
-        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsCurrent === 'Y') {
+        if (FilterActivePlayer(x => x.Sno === Sno)[0].IsCurrent === 'Y') {
             // $('.PlayerDealer').show();
             // $('.Pass').show();
             $('.PlayerActions').show()
@@ -1519,12 +1519,12 @@ function UpdateView() {
         $('.AddToPot').show()
 
         // new rule
-        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].PlayerCards.length > 0) {
+        if (FilterActivePlayer(x => x.Sno === Sno)[0].PlayerCards.length > 0) {
             $('.ShowAll').show()
         }
 
         // card dealt / no bet yet // after first bet
-        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno && x.IsCurrent === 'Y').length === 1 && GameHash.ActivePlayers.filter(x => x.Sno === Sno && x.IsCurrent === 'Y')[0].PlayerCards.length > 0) {
+        if (FilterActivePlayer(x => x.Sno === Sno && x.IsCurrent === 'Y').length === 1 && FilterActivePlayer(x => x.Sno === Sno && x.IsCurrent === 'Y')[0].PlayerCards.length > 0) {
             $('#BetTakeValue').show()
             $('.Bet').show()
             $('.ShowAll').show()
@@ -1610,7 +1610,7 @@ function PassDealPlayer(newdealerSno) {
 function TakeCommunityCard(val) {
     if (val === '1') {
         const comindex = GameHash.CommunityCards.filter(y => y.Value === CardSelectedValue)[0].CommunityIndex
-        GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].PlayerCards.push(GameHash.CommunityCards.filter(y => y.Value === CardSelectedValue)[0])
+        FilterActivePlayer(x => x.Sno === Sno)[0].PlayerCards.push(GameHash.CommunityCards.filter(y => y.Value === CardSelectedValue)[0])
         GameHash.CommunityCards = GameHash.CommunityCards.filter(x => x.Value !== CardSelectedValue)
 
         if (GameHash.CommunityCards.filter(x => x.CommunityIndex === comindex).length === 0) {
@@ -1767,12 +1767,12 @@ function GetBetStatus(snoCurrent) {
     const betamount = GameHash.CurrentBet
 
     // current player call for continuing round
-    const currentplayerbet = betamount - parseFloat(GameHash.ActivePlayers.filter(x => x.Sno === snoCurrent)[0].CurrentRoundStatus)
+    const currentplayerbet = betamount - parseFloat(FilterActivePlayer(x => x.Sno === snoCurrent)[0].CurrentRoundStatus)
 
     // adding betstatusSno
     GameHash.BetStatusSno = snoCurrent
 
-    return 'The bet is ' + currentplayerbet + ' to ' + GameHash.ActivePlayers.filter(x => x.Sno === snoCurrent)[0].PlayerId.split('pk2')[0]
+    return 'The bet is ' + currentplayerbet + ' to ' + FilterActivePlayer(x => x.Sno === snoCurrent)[0].PlayerId.split('pk2')[0]
 }
 
 /**
@@ -1830,7 +1830,7 @@ function SetFirstUnfoldedPlayerAsCurrent(Sno = -1) {
  * _CardValue: passing card value
 */
 function passCardToPlayer(fromPlayer, toPlayer, _CardValue) {
-    GameHash.ActivePlayers.filter(x => x.Sno === toPlayer)[0].PlayerCards.push(GameHash.ActivePlayers.filter(x => x.Sno === fromPlayer)[0].PlayerCards.filter(y => y.Value === _CardValue)[0])
+    FilterActivePlayer(x => x.Sno === toPlayer)[0].PlayerCards.push(FilterActivePlayer(x => x.Sno === fromPlayer)[0].PlayerCards.filter(y => y.Value === _CardValue)[0])
     RemoveCardFromPlayer(fromPlayer, _CardValue)
 }
 
@@ -1892,7 +1892,7 @@ function buildLogStatement(actionObj) {
  * no: Sno tht you want to find
 */
 function GetActivePlayerBySno(no) {
-    return GameHash.ActivePlayers.filter(x => x.Sno === no)[0]
+    return FilterActivePlayer(x => x.Sno === no)[0]
 }
 
 /**
@@ -1909,7 +1909,7 @@ function GetDealer()
  * Sno: Get Players joined after this param(default -1)
 */
 function GetUnfoldedActivePlayersAfterSno(Sno = -1) {
-    return GameHash.ActivePlayers.filter(x => x.Sno > Sno && x.IsFolded === 'N')
+    return FilterActivePlayer(x => x.Sno > Sno && x.IsFolded === 'N')
 }
 
 /**
@@ -2017,6 +2017,7 @@ function initializeGameHash(playerId, connectionId, playerUniqueId)
     })
     Sno = 1
 }
+
 /*
      ------------------ END common function definition ------------------
 */
@@ -2203,7 +2204,7 @@ function JoinGame(UserName, ConnectionId, GameCode) {
                     2. Remove current player from ContinuityPlayers
                 */
                 ExistingPlayer.ConnectionId = connection.connectionId
-                GameHash.ContinuityPlayers = GameHash.ContinuityPlayers.filter(x => x.PlayerUniqueId !== userId)
+                GameHash.ContinuityPlayers = FilterContinuityPlayer(x => x.PlayerUniqueId !== userId)
 
                 // Update GameHash by gamecode
                 UpdateGameHash(GameHash.GameId)
@@ -2594,7 +2595,7 @@ function PassCard(obj) {
 
     // If you select specific player
     else {
-        $.each(GameHash.ActivePlayers.filter(x => x.Sno === Sno), function () {
+        $.each(FilterActivePlayer(x => x.Sno === Sno), function () {
             for (let count = 0; count < $selectedCard.length; count++) {
                 passCardToPlayer(Sno, PlayerSno, $($selectedCard[count]).data('cardvalue'))
             }
@@ -2838,26 +2839,24 @@ function SettleRound() {
         GameHash.CommunityCards = []
         $.each(GameHash.ActivePlayers, function (i, obj) {
             if (FilterContinuityPlayer(x => x.Sno === obj.Sno).length === 1) {
-                const ExistingPlayer = ListForSitOutPlayer.filter(x => x.UserName === obj.PlayerId);
+                const ExistingPlayer = ListForSitOutPlayer.filter(x => x.UserName === obj.PlayerId)[0];
 
                 // only if sitout is lifted
-                if (ExistingPlayer.length > 0) {
-                    if (ExistingPlayer[0].IsSitOut === false || ExistingPlayer.IsSitOut === null) {
+                if (ExistingPlayer !== undefined) {
+                    if (ExistingPlayer.IsSitOut === false || ExistingPlayer.IsSitOut === null) {
                         obj.IsFolded = 'N'
                         GameHash.ContinuityPlayers = FilterContinuityPlayer(x => x.Sno !== obj.Sno)
-                    } else {
-                        obj.IsFolded = 'Y'
                     }
-                } else {
+                    else
+                        obj.IsFolded = 'Y'
+                }
+                else {
                     obj.IsFolded = 'Y'
                     GameHash.ContinuityPlayers = FilterContinuityPlayer(x => x.Sno !== obj.Sno)
                 }
-
                 obj.IsCurrent = 'N'
-                // obj.IsDealer = "N";
             }
 
-            // obj.PlayerAmount = 0;
             obj.PlayerCards = []
             obj.CurrentRoundStatus = 0
         })
@@ -2872,6 +2871,7 @@ function SettleRound() {
                 Amount: '0 New Hand -->'
             }
         })
+
         GameHash.Round = 1
         GameHash.CurrentBet = 0
         GameHash.Deck = GetNewDeck()
@@ -2892,13 +2892,13 @@ function SettleRound() {
                 tmplist.push(objtmp2.Sno)
             })
 
-            DealerSno = GameHash.ActivePlayers.filter(x => tmplist.filter(y => y === x.Sno).length === 0)[0].Sno
+            DealerSno = FilterActivePlayer(x => tmplist.filter(y => y === x.Sno).length === 0)[0].Sno
 
             // for removing deal duplication
             $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
                 obj2.IsDealer = 'N'
             })
-            GameHash.ActivePlayers.filter(x => tmplist.filter(y => y === x.Sno).length === 0)[0].IsDealer = 'Y'
+            FilterActivePlayer(x => tmplist.filter(y => y === x.Sno).length === 0)[0].IsDealer = 'Y'
         }
 
         $.each(GameHash.ActivePlayers, function (i, obj) {
@@ -2927,7 +2927,7 @@ function SettleRound() {
             SnoTemp = (GameHash.ActivePlayers.sort(function (a, b) {
                 return a.Sno - b.Sno
             }).filter(y => y.IsFolded === 'N')[0]).Sno; // for current
-            (GameHash.ActivePlayers.filter(x => x.Sno === SnoTemp)[0]).IsCurrent = 'Y'
+            (FilterActivePlayer(x => x.Sno === SnoTemp)[0]).IsCurrent = 'Y'
         } else {
             if (GameHash.ActivePlayers.sort(function (a, b) {
                 return a.Sno - b.Sno
@@ -2959,7 +2959,7 @@ function SettleRound() {
         GameHash.Steps.push({
             RoundId: (GameHash.Round - 1),
             Step: {
-                PlayerId: GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].PlayerId,
+                PlayerId: FilterActivePlayer(x => x.Sno === Sno)[0].PlayerId,
                 PlayerSno: Sno,
                 Action: ' ended hand ',
                 Amount: '0 ||Summary: ' +
@@ -2967,9 +2967,9 @@ function SettleRound() {
             }
         })
 
-        GameHash.BetStatus = 'The bet is 0 to ' + (GameHash.ActivePlayers.filter(x => x.IsCurrent === 'Y')[0]).PlayerId.split('pk2')[0]
+        GameHash.BetStatus = 'The bet is 0 to ' + (FilterActivePlayer(x => x.IsCurrent === 'Y')[0]).PlayerId.split('pk2')[0]
 
-        if (GameHash.ActivePlayers.filter(x => x.IsDealer === 'Y')[0].Sno === Sno) {
+        if (FilterActivePlayer(x => x.IsDealer === 'Y')[0].Sno === Sno) {
             GameHash.IsRoundSettlement = 'Y'
             UpdateGameHash(GameHash.GameId)
 
@@ -3081,7 +3081,7 @@ function ShowHandSettleHand() {
 
             // Sum all player's PlayerAmount
             $.each(GameHash.ActivePlayers, function (i, obj) {
-                SumOfEachPlayer = SumOfEachPlayer + parseFloat(obj.PlayerAmount)
+                SumOfEachPlayer = SumOfEachPlayer + obj.PlayerAmount
             })
 
             // Append transaction
@@ -3160,9 +3160,9 @@ function CalculateEndHand(val1) {
     // only when potsize = 0
     if (tmpGameHash.PotSize === 0) {
         /*
-             * Get Winners sort by Balance(PlayerNetStatusFinal).
-             * Winners are players with positive balance.
-            */
+            * Get Winners sort by Balance(PlayerNetStatusFinal).
+            * Winners are players with positive balance.
+        */
         const Winners = tmpGameHash.ActivePlayers.filter(x => x.PlayerNetStatusFinal > 0).sort(function (a, b) {
             return b.PlayerNetStatusFinal - a.PlayerNetStatusFinal
         })
@@ -3177,15 +3177,12 @@ function CalculateEndHand(val1) {
 
         $.each(Loosers, function (i, obj1) {
             if (obj1.Balance < 0) {
-                /*
-                         * Find
-                        */
                 for (let k = 0; k < Winners.length; k++) {
                     // if both looser and winner balance is not 0, Add transaction
                     if (obj1.Balance !== 0 && Winners[k].Balance !== 0) {
                         /*
-                                     * if Winner's balance is the same as looser's balance, set both of their balance as 0 and add transaction
-                                    */
+                            * if Winner's balance is the same as looser's balance, set both of their balance as 0 and add transaction
+                        */
                         if (obj1.Balance * (-1) === Winners[k].Balance) {
                             ArrTransaction.push({ from: obj1.PlayerId, to: Winners[k].PlayerId, amount: Winners[k].Balance })
                             obj1.Balance = 0
@@ -3193,8 +3190,8 @@ function CalculateEndHand(val1) {
                         }
 
                         /*
-                                     * if loosers's negative balance is bigger than winner's positive balance, set looser's balance as looser.Balance + Winner.Balance
-                                    */
+                            * if loosers's negative balance is bigger than winner's positive balance, set looser's balance as looser.Balance + Winner.Balance
+                        */
                         else if (obj1.Balance * (-1) > Winners[k].Balance) {
                             ArrTransaction.push({ from: obj1.PlayerId, to: Winners[k].PlayerId, amount: Winners[k].Balance })
                             obj1.Balance = obj1.Balance + Winners[k].Balance
@@ -3202,8 +3199,8 @@ function CalculateEndHand(val1) {
                         }
 
                         /*
-                                     * if looser's negative balance is less than winner's positive balance, set winner's balance as looser.Balance + Winner.Balance
-                                    */
+                            * if looser's negative balance is less than winner's positive balance, set winner's balance as looser.Balance + Winner.Balance
+                        */
                         else if (obj1.Balance * (-1) < Winners[k].Balance) {
                             ArrTransaction.push({ from: obj1.PlayerId, to: Winners[k].PlayerId, amount: (obj1.Balance * (-1)) })
                             Winners[k].Balance = obj1.Balance + Winners[k].Balance
@@ -3268,52 +3265,55 @@ function _GetUpdatedGameHash(gameid) {
 function OtherPlayerDisconnected(PlayerConnectionId, UserId) {
     console.log('PlayerConnectionId: ' + PlayerConnectionId + ' UserId: ' + UserId + ' disconnected')
 
-    PlayerConnectionId = 'pk2' + UserId.split('pk2')[1]
+    PlayerConnectionId = 'pk2' + GetConnectionIdFromPlayerId(UserId)
+
+    const disconnectedPlayer = FilterActivePlayer(x => x.PlayerId.includes(PlayerConnectionId))[0];
+    const currentPlayer = GetActivePlayerBySno(Sno)
 
     // if disconnected player is in ActivePlayerList
-    if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId)).length === 1) {
-        // disconnected player number.
-        const snumber = GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].Sno
+    if (disconnectedPlayer !== undefined) {
+
 
         // Remove that player from continuityPlayers.
-        GameHash.ContinuityPlayers = GameHash.ContinuityPlayers.filter(x => x.PlayerId.includes(PlayerConnectionId) === false)
+        GameHash.ContinuityPlayers = FilterContinuityPlayer(x => x.PlayerId.includes(PlayerConnectionId) === false)
 
-        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent === 'Y') {
+        //if disconnectedPlayer was current
+        if (disconnectedPlayer.IsCurrent === 'Y') {
             $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsCurrent = 'N' })
 
-            if (GameHash.ActivePlayers.filter(x => x.Sno > snumber && x.IsFolded === 'N').length === 0) {
-                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded === 'N')[0].IsCurrent = 'Y'
-                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.IsFolded === 'N')[0].Sno)
-            } else {
-                GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].IsCurrent = 'Y'
-                GameHash.GetBetStatus = GetBetStatus(GameHash.ActivePlayers.sort(x => x.Sno).filter(x => x.Sno > snumber)[0].Sno)
+            if (FilterActivePlayer(x => x.Sno > disconnectedPlayer.Sno && x.IsFolded === 'N').length === 0) {
+
+                SetFirstUnfoldedPlayerAsCurrent();
+                GameHash.GetBetStatus = GetBetStatus(GetFirstUnfoldedPlayerAfterSno().Sno)
+
+            }
+            else {
+
+                SetFirstUnfoldedPlayerAsCurrent(disconnectedPlayer.Sno)
+                GameHash.GetBetStatus = GetBetStatus(GetFirstUnfoldedPlayerAfterSno(disconnectedPlayer.Sno).Sno)
+
             }
         }
 
-        if (GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer === 'Y') {
-            if (GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded === 'N').length === 0) {
-                SetFirstUnfoldedPlayerAsDealer(snumber)
+        // if disconnectedPlayer was dealer
+        if (disconnectedPlayer.IsDealer === 'Y') {
+            if (FilterActivePlayer(x => x.Sno > disconnectedPlayer.Sno && x.IsFolded === 'N').length === 0) {
+                SetFirstUnfoldedPlayerAsDealer()
             } else {
-                // for removing deal duplication
-                $.each(GameHash.ActivePlayers, function (cnt1, obj2) {
-                    obj2.IsDealer = 'N'
-                })
-
-                GameHash.ActivePlayers.sort(y => y.Sno).filter(x => x.Sno < snumber && x.IsFolded === 'N')[0].IsDealer = 'Y'
+                SetFirstUnfoldedPlayerAsDealer(disconnectedPlayer.Sno)
             }
         }
 
         // Set current Player IsDealer = "N", IsCurrent = "N".
-        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsDealer = 'N'
-        GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0].IsCurrent = 'N'
+        disconnectedPlayer.IsDealer = 'N'
+        disconnectedPlayer.IsCurrent = 'N'
 
         // Add to ContinuityPlayers
-        GameHash.ContinuityPlayers.push(GameHash.ActivePlayers.filter(x => x.PlayerId.includes(PlayerConnectionId))[0])
+        GameHash.ContinuityPlayers.push(disconnectedPlayer)
 
         // If you are current or dealer, Update Game Hash.
-        if (GameHash.ActivePlayers.filter(x => (x.Sno === Sno && (x.IsCurrent === 'Y' || x.IsDealer === 'Y'))).length > 0) {
+        if (currentPlayer.IsCurrent === 'Y' || currentPlayer.IsDealer === 'Y')
             UpdateGameHash(GameHash.GameId)
-        }
     }
     UpdateView()
 }
@@ -3472,7 +3472,7 @@ async function start() {
                     // Only if you are in the same Game
                     if (GameHash.GameId === gamecode) {
                         // If you 're not dealer, hide Modal
-                        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsDealer !== 'Y') {
+                        if (FilterActivePlayer(x => x.Sno === Sno)[0].IsDealer !== 'Y') {
                             $('.EndGameForCurrent').hide()
                             ShowSummaryV2()
                         }
@@ -3493,7 +3493,7 @@ async function start() {
                     // Only if you are in the same Game
                     if (GameHash.GameId === gamecode) {
                         // If you 're not dealer, hide Modal
-                        if (GameHash.ActivePlayers.filter(x => x.Sno === Sno)[0].IsDealer !== 'Y') {
+                        if (FilterActivePlayer(x => x.Sno === Sno)[0].IsDealer !== 'Y') {
                             $('.SettleRound').hide()
                             $('.EndGameForCurrent').hide()
                             ShowHandSettleHand()
