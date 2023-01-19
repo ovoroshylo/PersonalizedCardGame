@@ -339,12 +339,12 @@ namespace PersonalizedCardGame.Controllers
                         var userid = _CardGameContext.Player.Where(x => x.PlayerUniqueId == model.PlayerUniqueId).FirstOrDefault().Id;
                         
                         //Add GameLog
-                        _CardGameContext.GameLog.Add(new GameLog() { Created = DateTime.Now, GameId = gameresp.Id, PlayerId = userid, Action = model.ActionMessage });
+                        //_CardGameContext.GameLog.Add(new GameLog() { Created = DateTime.Now, GameId = gameresp.Id, PlayerId = userid, Action = model.ActionMessage });
                         int updated = _CardGameContext.SaveChanges();
 
                         transaction.Commit();
 
-                        if (updated == 2)
+                        if (updated == 1)
                         {
                             //send ReceiveHashV1 Message to all of members.
                             foreach (var p in players)

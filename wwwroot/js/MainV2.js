@@ -1780,9 +1780,15 @@ function GetBetStatus(snoCurrent) {
  * @param {integer} Sno - Sno of the player
 */
 function GetFirstUnfoldedPlayerAfterSno(Sno = -1) {
-    return GameHash.ActivePlayers.sort(function (a, b) {
+
+    let index = GameHash.ActivePlayers.sort(function (a, b) {
         return a.Sno - b.Sno
-    }).filter(y => y.IsFolded === 'N' && y.Sno > Sno)[0] || {}
+    }).findIndex(y => y.IsFolded === 'N' && y.Sno > Sno)
+
+    if (index === -1)
+        return undefined;
+
+    return GameHash.ActivePlayers[index]
 }
 
 /**
@@ -1795,7 +1801,7 @@ function SetDealer(newdealerSno) {
         obj2.IsDealer = 'N'
     })
 
-    const newDealer = FilterActivePlayer(x => x.Sno === newdealerSno)[0] || {};
+    const newDealer = GetActivePlayerBySno(newdealerSno);
     newDealer.IsDealer = 'Y'
 }
 
@@ -1805,7 +1811,7 @@ function SetDealer(newdealerSno) {
  * Sno: player's Sno(-1 as default)
 */
 function SetFirstUnfoldedPlayerAsDealer(Sno = -1) {
-    SetDealer(GetFirstUnfoldedPlayerAfterSno(Sno))
+    SetDealer(GetFirstUnfoldedPlayerAfterSno(Sno).Sno)
 }
 
 /*
@@ -1892,7 +1898,13 @@ function buildLogStatement(actionObj) {
  * no: Sno tht you want to find
 */
 function GetActivePlayerBySno(no) {
-    return FilterActivePlayer(x => x.Sno === no)[0]
+
+    let playerIndex = GameHash.ActivePlayers.findIndex(x => x.Sno === no)
+
+    if (playerIndex === -1)
+        return undefined;
+
+    return GameHash.ActivePlayers[playerIndex]
 }
 
 /**
@@ -1900,7 +1912,12 @@ function GetActivePlayerBySno(no) {
 */
 function GetDealer()
 {
-    return FilterActivePlayer(x => x.IsDealer === 'Y')[0];
+    let playerIndex = GameHash.ActivePlayers.findIndex(x => x.IsDealer === 'Y')
+
+    if (playerIndex === -1)
+        return undefined;
+
+    return GameHash.ActivePlayers[playerIndex];
 }
 
 /**
@@ -2128,7 +2145,6 @@ function JoinGame(UserName, ConnectionId, GameCode) {
         $('.spinner').hide()
 
         const dealer = GetDealer()
-        const currentPlayer = GetActivePlayerBySno(Sno)
         const ExistingPlayer = FilterActivePlayer(x => x.PlayerUniqueId === userId)[0];
 
         // if GameHash of gamecode you want is not there
@@ -2186,6 +2202,7 @@ function JoinGame(UserName, ConnectionId, GameCode) {
                 })
 
                 if (GameHash.IsRoundSettlement === 'N') {
+                    const currentPlayer = GetActivePlayerBySno(Sno)
                     currentPlayer.IsFolded = 'Y'
                     GameHash.ContinuityPlayers.push(currentPlayer)
                 }
@@ -2214,6 +2231,7 @@ function JoinGame(UserName, ConnectionId, GameCode) {
             else if (FilterActivePlayer(x => x.PlayerUniqueId === userId && x.IsFolded === 'Y').length === 1) {
 
                 Sno = ExistingPlayer.Sno
+
                 // if you didn't added to ContinuityPlayers list, add you there.
                 if (FilterContinuityPlayer(x => x.PlayerUniqueId === userId).length === 0)
                     GameHash.ContinuityPlayers.push(ExistingPlayer)
@@ -2221,13 +2239,12 @@ function JoinGame(UserName, ConnectionId, GameCode) {
                 UpdateGameHash(GameHash.GameId)
             }
 
-            
             UpdateView()
         }
 
         // If there's no Dealer, set CurrentPlayer as Dealer
         if (dealer === undefined) {
-            currentPlayer.IsDealer = 'Y'
+            GetActivePlayerBySno(Sno).IsDealer = 'Y'
             UpdateGameHash(GameHash.GameId)
         }
     })
@@ -3263,35 +3280,32 @@ function _GetUpdatedGameHash(gameid) {
  *
 */
 function OtherPlayerDisconnected(PlayerConnectionId, UserId) {
+
     console.log('PlayerConnectionId: ' + PlayerConnectionId + ' UserId: ' + UserId + ' disconnected')
 
     PlayerConnectionId = 'pk2' + GetConnectionIdFromPlayerId(UserId)
 
-    const disconnectedPlayer = FilterActivePlayer(x => x.PlayerId.includes(PlayerConnectionId))[0];
+    const disconnectedPlayerIndex = GameHash.ActivePlayers.findIndex(x => x.PlayerId.includes(PlayerConnectionId))
+    const disconnectedPlayer = disconnectedPlayerIndex === -1 ? undefined : GameHash.ActivePlayers[disconnectedPlayerIndex]
+
     const currentPlayer = GetActivePlayerBySno(Sno)
 
     // if disconnected player is in ActivePlayerList
     if (disconnectedPlayer !== undefined) {
-
 
         // Remove that player from continuityPlayers.
         GameHash.ContinuityPlayers = FilterContinuityPlayer(x => x.PlayerId.includes(PlayerConnectionId) === false)
 
         //if disconnectedPlayer was current
         if (disconnectedPlayer.IsCurrent === 'Y') {
-            $.each(GameHash.ActivePlayers, function (i, obj) { obj.IsCurrent = 'N' })
-
+            
             if (FilterActivePlayer(x => x.Sno > disconnectedPlayer.Sno && x.IsFolded === 'N').length === 0) {
-
                 SetFirstUnfoldedPlayerAsCurrent();
                 GameHash.GetBetStatus = GetBetStatus(GetFirstUnfoldedPlayerAfterSno().Sno)
-
             }
             else {
-
                 SetFirstUnfoldedPlayerAsCurrent(disconnectedPlayer.Sno)
                 GameHash.GetBetStatus = GetBetStatus(GetFirstUnfoldedPlayerAfterSno(disconnectedPlayer.Sno).Sno)
-
             }
         }
 
